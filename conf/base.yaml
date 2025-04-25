@@ -2,19 +2,22 @@ defaults:
   - _self_
   - model:  xxz
   - ansatz: rbm
-  - task: analysis_is
+  - task: vmc_gs
+  - solver_fn: cholesky
+  - sampler: exchange
+  - is_distrib: overdispersed
 
-device: "5"
-is_mode : null
-solver_fn :
-  _target_: netket.optimizer.solver.cholesky
-  # _target_ : scipy.sparse.linalg.cg
+auto_is: true
 lr : 0.0022
-diag_shift : schedule
-n_iter : 6000
-sample_size : 9
+diag_shift : 1e-4
+callback_list: 
+  - _target_ : grad_sample.utils.save_exact_err
+  - _target_ : grad_sample.utils.save_sampler_state
+    save_every: 250
+
+n_iter: 2000
+sample_size : 11
 chunk_size_jac: 1024
 chunk_size_vmap : 100
-save_every : 10
-run_index : 0
-base_path : /scratch/.amisery/grad_sample_fullsum/
+save_every : null
+run_index : null

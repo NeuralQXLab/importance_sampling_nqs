@@ -1,34 +1,33 @@
 defaults:
   - _self_
-  - model: lithium_oxide
+  - model: nitrogen
   - ansatz: nnbf
   - task: vmc_ng
   - solver_fn: cholesky
-  - sampler: fermionhop
+  - sampler: exact
   - is_distrib: overdispersed
 
-n_iter : 5000
+ansatz:
+  n_hidden_units: 16
+
+n_iter : 500
 lr:
   _target_: optax.linear_schedule
   init_value: 0.1
-  transition_steps: 1000
+  transition_steps: 250
   end_value: 0.01
                            
-diag_shift:
-  _target_: optax.linear_schedule
-  init_value: 5e-3
-  end_value: 1e-5,
-  transition_steps: 500
+diag_shift: 1e-4
 
-callbacks:
-  - callbacks/save_err_approx
-  - callbacks/save_sampler_state
+callback_list: 
+  - _target_ : grad_sample.utils.save_exact_err
+  save_every: 10
 
 chunk_size_jac: 1024
 chunk_size_vstate: 8192
 chunk_size_vmap : 100
 
-sample_size : 13
+sample_size : 10
 momentum : 0.9
 auto_is: false
 collect_gradient_statistics: false

@@ -1,3 +1,0 @@
-_target_ : netket.models.MLP
-hidden_dims_alpha : [3, 3]
-param_dtype: complex

@@ -7,7 +7,6 @@ defaults:
   - sampler: exchange
   - is_distrib: overdispersed
  
-  
 device: null
 auto_is: false
 lr : 0.0022
