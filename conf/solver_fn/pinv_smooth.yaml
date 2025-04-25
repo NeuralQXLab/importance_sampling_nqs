@@ -1,0 +1,3 @@
+_target_: netket.optimizer.solver.pinv_smooth
+  # rtol: 1e-6
+  # rtol_smooth : 1e-6  

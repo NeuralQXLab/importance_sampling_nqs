@@ -1,0 +1,3 @@
+_target_ : netket.models.RBM
+alpha : 3
+param_dtype: complex

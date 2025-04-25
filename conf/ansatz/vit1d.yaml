@@ -1,0 +1,7 @@
+_target_ : deepnets.net.ViT1D
+depth: 4
+d_model: 8
+heads: 8
+linear_patch_size: 4
+output_head_name: "Vanilla" #Vanilla/RBMnoLayer
+expansion_factor: 1

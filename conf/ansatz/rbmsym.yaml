@@ -1,0 +1,3 @@
+_target_ : netket.models.RBMSymm
+alpha : 3
+param_dtype: complex

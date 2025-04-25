@@ -1,0 +1,20 @@
+defaults:
+  - _self_
+  - model: heisenberg1d
+  - ansatz: vit1d
+  - sampler: exchange
+  - task: train
+  - solver_fn: cholesky
+
+device: '6'
+is_mode : null
+auto_is : false
+lr : 0.001
+diag_shift : 1e-4
+n_iter : 6000
+sample_size : 9
+chunk_size_jac: 1024
+chunk_size_vmap : 100
+save_every : null
+run_index : null
+base_path : /scratch/.amisery/grad_sample_vit1d_runs_sample_comp/

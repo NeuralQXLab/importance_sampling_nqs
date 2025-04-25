@@ -1,0 +1,19 @@
+defaults:
+  - _self_
+  - model:  xxz
+  - ansatz: rbm
+  - task: train
+  - solver_fn: cholesky
+  - sampler: exact
+  - is_distrib: overdispersed
+
+device: null
+auto_is: false
+lr : 0.0022
+diag_shift : 1e-4
+n_iter : 2000
+sample_size : 11
+chunk_size_jac: 1024
+chunk_size_vmap : 100
+save_every : null
+run_index : null

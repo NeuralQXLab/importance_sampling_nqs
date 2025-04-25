@@ -1,0 +1,3 @@
+_target_ : grad_sample.models.XXZ
+J: 1.5
+L: 16

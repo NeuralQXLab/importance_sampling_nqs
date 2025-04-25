@@ -1,0 +1,9 @@
+_target_: deepnets.net.ptvmc.CNN
+# lattice: ${graph}
+kernel_size: 
+  - 3
+  - 3
+channels: 
+  - 10
+  - 10
+  - 10
