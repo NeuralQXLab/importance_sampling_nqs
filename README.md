@@ -11,6 +11,7 @@ This repository holds the code for the paper 'Importance Sampling Neural Quantum
 First clone the repository, then install the package doing:
 
 ```bash
+git clone https://github.com/NeuralQXLab/importance_sampling_nqs.git
 cd importance_sampling_nqs
 pip install -e .
 ```
