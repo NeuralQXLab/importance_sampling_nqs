@@ -5,3 +5,5 @@ from .utils import cumsum, e_diag, find_closest_saved_vals
 from .distances import fs_dist, curved_dist, dot_prod, param_overlap
 
 from .tree_op import shape_tree, snr_tree, dagger_pytree, vjp_pytree, mul_pytree, pytree_mean, flatten_tree_to_array
+
+from .serialization import serialize_MetropolisSamplerState, deserialize_MetropolisSamplerState

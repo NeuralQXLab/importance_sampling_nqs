@@ -14,7 +14,7 @@ from omegaconf import DictConfig, OmegaConf, open_dict
 
 logging.basicConfig(level=logging.INFO)
 
-@hydra.main(version_base=None, config_path="../../conf", config_name="base")
+@hydra.main(version_base=None, config_path="./conf", config_name="base")
 def main(cfg: DictConfig):
     logging.info("---------------------------------------------------------------")
     envs = {k: os.environ.get(k) for k in ["CUDA_VISIBLE_DEVICES", "PYTHONOPTIMIZE"]}

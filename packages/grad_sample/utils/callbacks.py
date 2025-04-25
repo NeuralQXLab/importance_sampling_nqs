@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import copy
 import jax
 from advanced_drivers.driver import statistics
-from netket_checkpoint._src.serializers.metropolis import serialize_MetropolisSamplerState, deserialize_MetropolisSamplerState
+from .serialization import serialize_MetropolisSamplerState, deserialize_MetropolisSamplerState
 from flax.serialization import msgpack_serialize
 from functools import partial
 
@@ -81,6 +81,7 @@ def save_sampler_state(output_dir, save_every=50):
     def cb_func(step, logdata, driver, out_prefix, save_every=50):
         if step % save_every ==0:
             for chain_name, sampler_state in driver.state.sampler_states.items():
+                print(sampler_state)
                 state_dict = serialize_MetropolisSamplerState(sampler_state)
                 binary_data = msgpack_serialize(state_dict)
                 with open(os.path.join(out_prefix, "sampler_state_%s.mpack"%chain_name), "wb") as outfile:

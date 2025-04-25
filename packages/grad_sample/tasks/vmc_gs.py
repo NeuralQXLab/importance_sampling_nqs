@@ -6,7 +6,9 @@ import os
 # import netket_pro as nkp
 from jax.tree import structure as tree_structure
 from omegaconf import DictConfig, OmegaConf
-from hydra.utils import call, instantiate, get_class
+import hydra
+from hydra import initialize, compose
+from hydra.utils import call, instantiate, get_class, get_method
 import inspect
 
 from netket.vqs import FullSumState
@@ -15,9 +17,7 @@ import json
 import matplotlib.pyplot as plt
 import optax
 
-from grad_sample.utils import save_cb
 from grad_sample.tasks import Base
-from grad_sample.utils import save_rel_err_fs, save_rel_err_large, compute_snr_callback, save_sampler_state
 from functools import partial
 import advanced_drivers as advd
 
@@ -39,19 +39,30 @@ def add_module(old_params: dict, new_params: dict, max_attempts: int = 10):
     )
 
 def smart_instantiate(cfg, available_vars: dict, mode='instantiate'):
-    cls = get_class(cfg._target_)
-    sig = inspect.signature(cls.__init__)
-    # Skip 'self'
-    expected_args = set(sig.parameters) - {'self'}
-
-    # Find matching args
-    injected_args = {k: v for k, v in available_vars.items() if k in expected_args}
-    if mode == 'instantiate':
+    if not hasattr(cfg, '_target_'):
+        raise ValueError("Config missing '_target_' key")
+    try:
+        obj = get_class(cfg._target_)
+        sig = inspect.signature(obj.__init__)
+        skip_args = {'self'}
+        # Expected args from the signature
+        expected_args = set(sig.parameters) - skip_args
+        # Inject only what matches
+        injected_args = {k: v for k, v in available_vars.items() if k in expected_args}
         return instantiate(cfg, **injected_args)
-    elif mode == 'call':
+    
+    except:
+        obj = get_method(cfg._target_)
+        sig = inspect.signature(obj)
+        skip_args = set()
+        # Expected args from the signature
+        expected_args = set(sig.parameters) - skip_args
+        # Inject only what matches
+        injected_args = {k: v for k, v in available_vars.items() if k in expected_args}
+
         return call(cfg, **injected_args)
-    else:
-        raise ValueError('invalid mode specified')
+
+    
 
 class VMC_GS(Base):
     def __init__(self, cfg: DictConfig):
@@ -76,13 +87,11 @@ class VMC_GS(Base):
                         'sweep_size': self.model.hilbert_space.size,
                         'n_chains_per_rank': self.Nsample//2,
                         'hamiltonian': self.model.hamiltonian,
-                        'output_dir': self.output_dir,
                         'e_gs': self.E_gs,
                         'H_sp': self.model.hamiltonian.to_sparse()}
        
         self.sampler = smart_instantiate(self.cfg.sampler, kwargs_hydra)
         
-            
         self.vstate = nk.vqs.MCState(sampler= self.sampler, 
                                         model=self.ansatz, 
                                         chunk_size= self.chunk_size, 
@@ -110,8 +119,6 @@ class VMC_GS(Base):
                 print('bypassing checkpoint, invalid vars')
 
         # Save the current config to the custom path
-        with open(os.path.join(self.output_dir, "config.yaml"), "w") as f:
-            f.write(OmegaConf.to_yaml(self.cfg))
         if self.is_distrib.name == 'overdispersed':
             if self.auto_is: 
                 self.output_dir = self.base_path + f"/{self.model.name}_{self.model.h}/L{self.model.graph.n_nodes}/{self.ansatz_name}/{self.alpha}/MC_{self.sample_size}_isauto/{self.lr}_{self.diag_exp}"
@@ -123,6 +130,8 @@ class VMC_GS(Base):
             raise NotImplementedError()
         
         os.makedirs(self.output_dir, exist_ok=True)
+        with open(os.path.join(self.output_dir, "config.yaml"), "w") as f:
+            f.write(OmegaConf.to_yaml(self.cfg))
         print(self.output_dir)
         self.json_log = nk.logging.JsonLog(output_prefix=self.output_dir)
             
@@ -141,7 +150,7 @@ class VMC_GS(Base):
                                         model = self.gs.state.model, 
                                         chunk_size=self.chunk_size_vstate, 
                                         seed=0)
-
+        kwargs_hydra['output_dir'] = self.output_dir
         # self.autodiagshift = advd.callbacks.PI_controller_diagshift(diag_shift_max=0.01, diag_shift_min=1e-6, safety_fac=1.0, clip_min=0.99, clip_max=1.01)
         
         if self.save_every != None: 
@@ -150,8 +159,8 @@ class VMC_GS(Base):
             self.out_log = (self.json_log, self.state_log)
         else :
             self.out_log = (self.json_log,)
-
-        self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, kwargs_hydra, mode='call') for cb in cfg.callbacks)
+        
+        self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, kwargs_hydra, mode='call') for cb in cfg.callback_list)
 
     def __call__(self):
         print('calling run')

@@ -172,3 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# hydra output, cache logs
+out_log/
+outputs/

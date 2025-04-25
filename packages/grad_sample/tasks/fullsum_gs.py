@@ -15,13 +15,11 @@ import json
 import matplotlib.pyplot as plt
 import optax
 
-from grad_sample.utils import save_cb
 from grad_sample.tasks import Base
-from grad_sample.utils import save_rel_err_fs, save_rel_err_large, compute_snr_callback, save_sampler_state
 from functools import partial
 import advanced_drivers as advd
 
-class Fullsum_GS(Base):
+class FullSumGS(Base):
     def __init__(self, cfg: DictConfig):
         super().__init__(cfg)
         self.output_dir = self.base_path + f"/{self.model.name}_{self.model.h}/L{self.model.graph.n_nodes}/{self.ansatz_name}/{self.alpha}/{self.lr}_{self.diag_exp}"

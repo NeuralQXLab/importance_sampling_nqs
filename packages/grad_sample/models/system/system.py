@@ -16,8 +16,6 @@ from netket.graph.space_group import SpaceGroupBuilder
 from netket.utils.types import Array
 from netket.nn.blocks import SymmExpSum
 
-from deepnets.nn.blocks import FlipExpSum
-
 class Square_Heisenberg(Spin_Half):
     rotation_group = nk.utils.group.planar.C(4)
 
@@ -148,9 +146,6 @@ class Square_Heisenberg(Spin_Half):
                 lambda net: net,
                 lambda net: SymmExpSum(net, self.graph_symmetries["C4"]),
                 lambda net: SymmExpSum(net, self.graph_symmetries["Full point group"]),
-                lambda net: FlipExpSum(
-                    SymmExpSum(net, self.graph_symmetries["Full point group"])
-                ),
             )
         else:  # unsymmetrized + translations + C4 + full point + spin parity
             self.symmetrizing_functions = (
@@ -158,9 +153,6 @@ class Square_Heisenberg(Spin_Half):
                 lambda net: SymmExpSum(net, self.graph_symmetries["Translation"]),
                 lambda net: SymmExpSum(net, self.graph_symmetries["T@C4"]),
                 lambda net: SymmExpSum(net, self.graph_symmetries["T@Full"]),
-                lambda net: FlipExpSum(
-                    SymmExpSum(net, self.graph_symmetries["T@Full"])
-                ),
             )
 
         if len(sign_rule) != len(J):
@@ -314,9 +306,6 @@ class Shastry_Sutherland(Spin_Half):
             lambda net: SymmExpSum(
                 net, self.graph_symmetries["Full point group"]
             ),  # rotations and glides = full point group
-            lambda net: FlipExpSum(
-                SymmExpSum(net, self.graph_symmetries["Full point group"])
-            ),  # S^z parity and full point group
         )
 
         self.hamiltonian = nk.operator.Heisenberg(

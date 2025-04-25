@@ -24,12 +24,12 @@ from advanced_drivers._src.driver.ngd.driver_infidelity_ngd import (
 from advanced_drivers._src.driver.ngd.driver_vmc_ngd import (
     VMC_NG as VMC_NG,
 )
-from advanced_drivers._src.driver.infidelity.infidelity_fullsum import (
-    InfidelityOptimizer as InfidelityFullSum,
-)
-from advanced_drivers._src.driver.infidelity.infidelity_optimizer import (
-    InfidelityOptimizer as InfidelityOptimizer,
-)
+# from advanced_drivers._src.driver.infidelity.infidelity_fullsum import (
+#     InfidelityOptimizer as InfidelityFullSum,
+# )
+# from advanced_drivers._src.driver.infidelity.infidelity_optimizer import (
+#     InfidelityOptimizer as InfidelityOptimizer,
+# )
 
 from advanced_drivers._src.driver.ngd.distribution_constructors.default import (
     default_distribution as default_distribution,

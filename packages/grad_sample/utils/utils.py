@@ -3,11 +3,10 @@ import os
 from scipy.sparse.linalg import eigsh
 from netket.vqs import FullSumState
 import jax.numpy as jnp
-from grad_sample.is_hpsi.expect import snr_comp
 import copy
 import jax
 from advanced_drivers.driver import statistics
-from netket_checkpoint._src.serializers.metropolis import serialize_MetropolisSamplerState, deserialize_MetropolisSamplerState
+from .serialization import serialize_MetropolisSamplerState, deserialize_MetropolisSamplerState
 from flax.serialization import msgpack_serialize
 
 def cumsum(lst):

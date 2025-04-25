@@ -30,12 +30,7 @@ from netket.vqs import VariationalState, FullSumState
 from netket_pro import distributed
 
 from advanced_drivers._src.utils.itertools import to_iterable
-
-from netket_checkpoint._src.driver1.abstract_variational_driver import (
-    _restore_checkpoint,
-)
 from advanced_drivers._src.callbacks.base import AbstractCallback
-from advanced_drivers._src.callbacks.observables import ObservableCallback
 from advanced_drivers._src.callbacks.legacy_wrappers import (
     LegacyCallbackWrapper,
     LegacyLoggerWrapper,
@@ -233,31 +228,7 @@ class AbstractVariationalDriver(struct.Pytree, mutable=True):
         """
         return self._step_count
 
-    def _restore_checkpoint(
-        self, chkptr, step=None, *, loggers=(), callbacks=(), extra_metadata=None
-    ):
-        """
-        Restores the state of the driver from a checkpoint.
-
-        Args:
-            chkptr: The checkpoint manager to use for restoring the state.
-            step: The step to restore. If None, the latest step is restored.
-            loggers: The loggers to restore. If None, the loggers are not restored (for
-                internal use only).
-            callbacks: The callbacks to restore. If None, the callbacks are not restored (
-                for internal use only).
-            extra_metadata: Extra metadata to check against the checkpoint metadata (
-                used for internal consistency checks).
-        """
-        return _restore_checkpoint(
-            self,
-            chkptr,
-            step,
-            loggers=loggers,
-            callbacks=callbacks,
-            extra_metadata=extra_metadata,
-        )
-
+    
     def run(
         self,
         n_iter: int,
@@ -334,8 +305,6 @@ class AbstractVariationalDriver(struct.Pytree, mutable=True):
         loggers = to_iterable(out)
 
         callback_list = [maybe_wrap_legacy_callback(c) for c in to_iterable(callback)]
-        if obs is not None:
-            callback_list.append(ObservableCallback(obs, step_size))
         callback_list.extend(LegacyLoggerWrapper(log) for log in loggers)
         if show_progress:
             callback_list.append(ProgressBarCallback(n_iter))

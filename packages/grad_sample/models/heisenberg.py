@@ -1,6 +1,6 @@
 import netket as nk
 from netket.utils.types import Array
-from deepnets.system.base import Spin_Half
+from .system.base import Spin_Half
 import jax.numpy as jnp
 
 class Heisenberg1d(Spin_Half):
