@@ -1,3 +1,4 @@
 _target_ : grad_sample.models.TFI
 L : 4
-h : 1.0
+h : 0.3044
+J : -1.0

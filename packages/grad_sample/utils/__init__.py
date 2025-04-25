@@ -1,6 +1,6 @@
-from .callbacks import save_cb, save_exact_err, save_mc_large_err, save_sampler_state, compute_snr_callback
+from .callbacks import save_cb, save_exact_infidelity, save_exact_err, save_mc_large_err, save_sampler_state, compute_snr_callback
 
-from .utils import cumsum, e_diag, find_closest_saved_vals
+from .utils import cumsum, e_diag, find_closest_saved_vals, smart_instantiate
 
 from .distances import fs_dist, curved_dist, dot_prod, param_overlap
 

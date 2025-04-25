@@ -42,10 +42,11 @@ class CNN(nn.Module):
         x = x/np.sqrt(2)
         _, ns = x.shape[:-1], x.shape[-1]
         x = x.reshape(-1, *lattice_shape, 1)
+            
         for i,(c,k) in enumerate(zip(self.channels, self.kernels)):
             x = nn.Conv(
                 features=c,
-                kernel_size=3,
+                kernel_size=k,
                 padding="CIRCULAR",
                 param_dtype = self.param_dtype,
                 kernel_init = nn.initializers.xavier_normal(),
@@ -56,7 +57,7 @@ class CNN(nn.Module):
             else:
                 x = logcosh_expanded(x)
         
-        x = jnp.sum(x, axis=range(1, len(lattice_shape)+1))/np.sqrt(ns)
+        x = jnp.sum(x, axis=(1,2))/np.sqrt(ns)
         x = nn.Dense(features=x.shape[-1], param_dtype=self.param_dtype, use_bias=False)(x)
         x = jnp.sum(x, axis=-1)/np.sqrt(x.shape[-1])
         return x

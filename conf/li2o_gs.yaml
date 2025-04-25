@@ -27,7 +27,6 @@ callback_list:
 
 chunk_size_jac: 1024
 chunk_size_vstate: 8192
-chunk_size_vmap : 100
 
 sample_size : 13
 momentum : 0.9

@@ -1,13 +1,13 @@
 import netket.jax as nkjax
 import os
 from scipy.sparse.linalg import eigsh
-from netket.vqs import FullSumState
 import jax.numpy as jnp
 import copy
 import jax
 from advanced_drivers.driver import statistics
-from .serialization import serialize_MetropolisSamplerState, deserialize_MetropolisSamplerState
-from flax.serialization import msgpack_serialize
+
+from hydra.utils import call, instantiate, get_class, get_method
+import inspect
 
 def cumsum(lst):
     cumulative_sum = []
@@ -48,3 +48,27 @@ def find_closest_saved_vals(E_err, saved_vals, save_every, n_vals_per_scale=1):
             closest_saved_vals.append(saved_vals[saved_index])
             error_val.append(E_err[saved_index*save_every])
     return closest_saved_vals, error_val
+
+def smart_instantiate(cfg, available_vars: dict, mode='instantiate'):
+    if not hasattr(cfg, '_target_'):
+        raise ValueError("Config missing '_target_' key")
+    try:
+        obj = get_class(cfg._target_)
+        sig = inspect.signature(obj.__init__)
+        skip_args = {'self'}
+        # Expected args from the signature
+        expected_args = set(sig.parameters) - skip_args
+        # Inject only what matches
+        injected_args = {k: v for k, v in available_vars.items() if k in expected_args}
+        return instantiate(cfg, **injected_args)
+    
+    except:
+        obj = get_method(cfg._target_)
+        sig = inspect.signature(obj)
+        skip_args = set()
+        # Expected args from the signature
+        expected_args = set(sig.parameters) - skip_args
+        # Inject only what matches
+        injected_args = {k: v for k, v in available_vars.items() if k in expected_args}
+
+        return call(cfg, **injected_args)

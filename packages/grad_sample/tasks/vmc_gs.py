@@ -7,7 +7,7 @@ import os
 from jax.tree import structure as tree_structure
 from omegaconf import DictConfig, OmegaConf
 import hydra
-from hydra import initialize, compose
+
 from hydra.utils import call, instantiate, get_class, get_method
 import inspect
 
@@ -15,10 +15,9 @@ from netket.vqs import FullSumState
 from netket.callbacks import InvalidLossStopping
 import json
 import matplotlib.pyplot as plt
-import optax
 
 from grad_sample.tasks import Base
-from functools import partial
+from grad_sample.utils import smart_instantiate
 import advanced_drivers as advd
 
 def add_module(old_params: dict, new_params: dict, max_attempts: int = 10):
@@ -38,31 +37,6 @@ def add_module(old_params: dict, new_params: dict, max_attempts: int = 10):
         f"Exceed maximum number of attempts to match params structures ({max_attempts})"
     )
 
-def smart_instantiate(cfg, available_vars: dict, mode='instantiate'):
-    if not hasattr(cfg, '_target_'):
-        raise ValueError("Config missing '_target_' key")
-    try:
-        obj = get_class(cfg._target_)
-        sig = inspect.signature(obj.__init__)
-        skip_args = {'self'}
-        # Expected args from the signature
-        expected_args = set(sig.parameters) - skip_args
-        # Inject only what matches
-        injected_args = {k: v for k, v in available_vars.items() if k in expected_args}
-        return instantiate(cfg, **injected_args)
-    
-    except:
-        obj = get_method(cfg._target_)
-        sig = inspect.signature(obj)
-        skip_args = set()
-        # Expected args from the signature
-        expected_args = set(sig.parameters) - skip_args
-        # Inject only what matches
-        injected_args = {k: v for k, v in available_vars.items() if k in expected_args}
-
-        return call(cfg, **injected_args)
-
-    
 
 class VMC_GS(Base):
     def __init__(self, cfg: DictConfig):
