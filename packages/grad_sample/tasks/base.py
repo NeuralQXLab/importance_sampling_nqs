@@ -10,7 +10,7 @@ import jax.numpy as jnp
 import numpy as np
 import jax
 
-from grad_sample.utils import e_diag
+from grad_sample.utils import e_diag, smart_instantiate
 from typing import Sequence
 
 def to_sequence(arg):
@@ -27,57 +27,12 @@ class Base:
 
         # Instantiate model class (Ising, Heisenberg...)
         self.model = instantiate(self.cfg.model)
-
-        # Instantiate ansatz
-        if "LogStateVector" in self.cfg.ansatz._target_:
-            self.mode = "holomorphic"
-            self.ansatz = instantiate(self.cfg.ansatz, hilbert = self.model.hilbert_space)
-            self.alpha = 0
-
-        elif "CNN" in self.cfg.ansatz._target_:
-            self.mode = "complex" 
-            self.ansatz = instantiate(self.cfg.ansatz, lattice=self.model.graph)
-            self.alpha = len(self.cfg.ansatz.channels)
-
-        elif "ViT" in self.cfg.ansatz._target_:
-            # only works with rajah's model in models/system !
-            self.ansatz = call(self.cfg.ansatz, system = self.model).network
-            self.alpha = f"{self.cfg.ansatz.depth}_{self.cfg.ansatz.d_model}_{self.cfg.ansatz.heads}" #unique identifier for vit
-            self.mode = "complex"
-
-        elif 'LogNeuralBackflow' in self.cfg.ansatz._target_:
-            self.ansatz = instantiate(self.cfg.ansatz, hilbert = self.model.hilbert_space)
-            self.alpha = self.cfg.ansatz.hidden_units
-            self.mode = 'complex'
-
-        elif 'RBM' in self.cfg.ansatz._target_:
-            self.ansatz = instantiate(self.cfg.ansatz)
-            self.alpha = self.ansatz.alpha
-            if self.cfg.ansatz.param_dtype == 'complex':
-                self.mode = 'holomorphic'
-            else :
-                self.mode = 'real'
-            
-
-        dict_name = {"netket.models.RBM": "RBM",       
-        "netket.models.LogStateVector": "log_state",
-         "netket.experimental.models.LSTMNet": "RNN",
-         "grad_sample.ansatz.cnn.CNN": "CNN",
-         'deepnets.net.ptvmc.CNN': 'CNN',
-         "deepnets.net.ViT2D": "ViT2D",
-         "deepnets.net.ViT1D": "ViT1D",
-         'netket.models.MLP': 'MLP',
-         'grad_sample.ansatz.nnbf.LogNeuralBackflow' : 'NNBF'}
-         
-        self.ansatz_name = dict_name[self.cfg.ansatz._target_]
-
         # set hparams and relevant variables
         self.solver_fn = call(self.cfg.solver_fn)
         
         self.n_iter = self.cfg.get('n_iter')
         
         self.chunk_size_jac = self.cfg.get("chunk_size_jac")
-        self.chunk_size_vmap = self.cfg.get("chunk_size_vmap")
         self.chunk_size_vstate = self.cfg.get('chunk_size_vstate', None)
 
         self.save_every = self.cfg.get("save_every")
@@ -136,14 +91,6 @@ class Base:
         # define optimizer
         self.opt = optax.sgd(learning_rate=self.lr)
         # self.opt = optax.inject_hyperparams(optax.sgd)(learning_rate=self.lr) #used with autodiagshift
-
-        rng_key_pars = jax.random.PRNGKey(np.random.randint(10000))
-        # rng_key_pars = jax.random.PRNGKey(5)
-        params = self.ansatz.init(
-            rng_key_pars, jnp.zeros((1, self.model.graph.n_nodes))
-        )
-        self.max_nparams = nk.jax.tree_size(params)
-        print(f"Nparams = {self.max_nparams}")
     
         # code only support default and overdispersed distribution for naming right now
         if hasattr(self.model, 'E_fci') and self.model.E_fci is not None:
@@ -177,6 +124,71 @@ class Base:
 
         self.E_gs_per_site = self.E_gs/self.model.graph.n_nodes/4
         
+        self.kwargs_hydra = {'hilbert': self.model.hilbert_space,
+                        'graph': self.model.graph,
+                        'lattice': self.model.graph,
+                        'sweep_size': self.model.hilbert_space.size,
+                        'hamiltonian': self.model.hamiltonian,
+                        'e_gs': self.E_gs,
+                        'H_sp': self.model.hamiltonian.to_sparse()}
+        
+        # Instantiate ansatz
+        if "LogStateVector" in self.cfg.ansatz._target_:
+            self.mode = "holomorphic"
+            self.ansatz = instantiate(self.cfg.ansatz, hilbert = self.model.hilbert_space)
+            self.alpha = 0
+
+        elif "CNN" in self.cfg.ansatz._target_:
+            self.mode = "complex" 
+            self.ansatz = instantiate(self.cfg.ansatz, lattice=self.model.graph)
+            self.alpha = len(self.cfg.ansatz.channels)
+
+        elif "ViT" in self.cfg.ansatz._target_:
+            # only works with rajah's model in models/system !
+            self.ansatz = call(self.cfg.ansatz, system = self.model).network
+            self.alpha = f"{self.cfg.ansatz.depth}_{self.cfg.ansatz.d_model}_{self.cfg.ansatz.heads}" #unique identifier for vit
+            self.mode = "complex"
+
+        elif 'LogNeuralBackflow' in self.cfg.ansatz._target_:
+            self.ansatz = instantiate(self.cfg.ansatz, hilbert = self.model.hilbert_space)
+            self.alpha = self.cfg.ansatz.hidden_units
+            self.mode = 'complex'
+
+        elif 'RBM' in self.cfg.ansatz._target_:
+            self.ansatz = instantiate(self.cfg.ansatz)
+            self.alpha = self.ansatz.alpha
+            if self.cfg.ansatz.param_dtype == 'complex':
+                self.mode = 'holomorphic'
+            else :
+                self.mode = 'real'
+        elif 'Diagonal' in self.cfg.ansatz._target_:
+            self.net = smart_instantiate(self.cfg.net, self.kwargs_hydra)
+            import ptvmc.nn as pnn
+            self.ansatz = pnn.DiagonalWrapper(network = self.net, param_dtype=complex)
+            # self.ansatz = instantiate(self.cfg.ansatz, network=self.net)
+            self.alpha = 0
+        else:
+            raise ValueError('Ansatz not found')
+
+        dict_name = {"netket.models.RBM": "RBM",       
+        "netket.models.LogStateVector": "log_state",
+         "netket.experimental.models.LSTMNet": "RNN",
+         "grad_sample.ansatz.cnn.CNN": "CNN",
+         'grad_sample.ansatz.CNN': 'CNN',
+         'ptvmc.nn.DiagonalWrapper' : 'infid',
+         "deepnets.net.ViT2D": "ViT2D",
+         "deepnets.net.ViT1D": "ViT1D",
+         'netket.models.MLP': 'MLP',
+         'grad_sample.ansatz.LogNeuralBackflow' : 'NNBF'}
+         
+        self.ansatz_name = dict_name[self.cfg.ansatz._target_]
+
+        rng_key_pars = jax.random.PRNGKey(np.random.randint(10000))
+        # rng_key_pars = jax.random.PRNGKey(5)
+        params = self.ansatz.init(
+            rng_key_pars, jnp.zeros((1, self.model.graph.n_nodes))
+        )
+        self.max_nparams = nk.jax.tree_size(params)
+        print(f"Nparams = {self.max_nparams}")
 
         
-    

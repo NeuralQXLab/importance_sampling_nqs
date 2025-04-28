@@ -275,7 +275,7 @@ class InfidelityOptimizerNG(AbstractNGDDriver):
 
         extra_args = (afun_t, variables_t, samples_t, weights_t, self.cv_coeff)
 
-        return afun, variables, samples, weights, extra_args
+        return afun, variables, samples, weights, None, extra_args
 
     @property
     def _kernel(self) -> KernelFun:

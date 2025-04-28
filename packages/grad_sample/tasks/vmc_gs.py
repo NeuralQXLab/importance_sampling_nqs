@@ -56,15 +56,10 @@ class VMC_GS(Base):
         self.use_ntk = self.max_nparams > self.Nsample
 
         # args for sampler
-        kwargs_hydra = {'hilbert': self.model.hilbert_space,
-                        'graph': self.model.graph,
-                        'sweep_size': self.model.hilbert_space.size,
-                        'n_chains_per_rank': self.Nsample//2,
-                        'hamiltonian': self.model.hamiltonian,
-                        'e_gs': self.E_gs,
-                        'H_sp': self.model.hamiltonian.to_sparse()}
+        self.kwargs_hydra['n_chains_per_rank'] =  self.Nsample//2,
+        
        
-        self.sampler = smart_instantiate(self.cfg.sampler, kwargs_hydra)
+        self.sampler = smart_instantiate(self.cfg.sampler, self.kwargs_hydra)
         
         self.vstate = nk.vqs.MCState(sampler= self.sampler, 
                                         model=self.ansatz, 
@@ -120,11 +115,11 @@ class VMC_GS(Base):
                                         collect_gradient_statistics=self.collect_gradient_statistics,
                                         on_the_fly=False)
         
-        kwargs_hydra['fs_state'] = FullSumState(hilbert = self.gs.state.hilbert, 
+        self.kwargs_hydra['fs_state'] = FullSumState(hilbert = self.gs.state.hilbert, 
                                         model = self.gs.state.model, 
                                         chunk_size=self.chunk_size_vstate, 
                                         seed=0)
-        kwargs_hydra['output_dir'] = self.output_dir
+        self.kwargs_hydra['output_dir'] = self.output_dir
         # self.autodiagshift = advd.callbacks.PI_controller_diagshift(diag_shift_max=0.01, diag_shift_min=1e-6, safety_fac=1.0, clip_min=0.99, clip_max=1.01)
         
         if self.save_every != None: 
@@ -134,7 +129,7 @@ class VMC_GS(Base):
         else :
             self.out_log = (self.json_log,)
         
-        self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, kwargs_hydra, mode='call') for cb in cfg.callback_list)
+        self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, self.kwargs_hydra, mode='call') for cb in cfg.callback_list)
 
     def __call__(self):
         print('calling run')
@@ -143,31 +138,18 @@ class VMC_GS(Base):
         log_opt = self.output_dir + ".log"
         data = json.load(open(log_opt))
 
-        E = jnp.array(data["Energy"]["Mean"]["real"])
+        E = jnp.array(data["Energy"]["Mean"]["real"]) 
+        plt.plot(jnp.abs(E-self.E_gs)/jnp.abs(self.E_gs), label= "MC")
         
-        if self.plot_training_curve and (self.E_gs != None):
-            
-            plt.plot(jnp.abs(E-self.E_gs)/jnp.abs(self.E_gs), label= "MC")
-            
-            try :
-                plt.title(f"Relative error w.r.t. exact GS during training, {self.Nsample} samples")
-                e_r_fs = data["rel_err"]
-                plt.plot(e_r_fs["iters"], e_r_fs["value"], label= "FullSum")
-            except: 
-                plt.title(f"Relative error w.r.t. exact GS during training")
-            plt.xlabel("iteration")
-            plt.ylabel("Relative error")
-            plt.yscale("log")
-        
-        elif self.plot_training_curve:
-            
-            plt.plot(E, label= "MC Energy")
-            try :
-                plt.title(f"Energy during training, {self.Nsample} samples")
-            except: 
-                plt.title(f"Energy during training")
-            plt.xlabel("iteration")
-            plt.ylabel("Energy")
+        try :
+            plt.title(f"Relative error w.r.t. exact GS during training, {self.Nsample} samples")
+            e_r_fs = data["rel_err"]
+            plt.plot(e_r_fs["iters"], e_r_fs["value"], label= "FullSum")
+        except: 
+            plt.title(f"Relative error w.r.t. exact GS during training")
+        plt.xlabel("iteration")
+        plt.ylabel("Relative error")
+        plt.yscale("log")
             
         plt.legend()
         plt.savefig(self.output_dir + '/training.png')

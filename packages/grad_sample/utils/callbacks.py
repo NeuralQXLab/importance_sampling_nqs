@@ -15,36 +15,37 @@ def save_cb(step, logdata, driver):
     dp, _ = nkjax.tree_ravel(dp)
     logdata["dp"] = dp
     return True
+def save_exact_infidelity():
+    def _save_exact_infidelity(step, logdata, driver):
+        # samples = driver.state._all_states
 
-def save_exact_infidelity(step, logdata, driver):
-    # samples = driver.state._all_states
+        # afun, vars, _ = _lazy_apply_UV_to_afun(
+        #     driver.state, driver._V_state, extra_hash_data="V"
+        # )
+        if step%10 == 0:
+            ψ = (
+                driver._V_state.to_sparse() @ driver.state.to_array()
+                if driver._V_state is not None
+                else driver.state.to_array()
+            )
+            pdf_ψ = jnp.abs(ψ) ** 2
+            
+            ϕ = (
+                driver._U_target.to_sparse() @ driver._target.to_array()
+                if driver._U_target is not None
+                else driver.target.to_array()
+            )
+            ϕ = ϕ / jnp.linalg.norm(ϕ)
 
-    # afun, vars, _ = _lazy_apply_UV_to_afun(
-    #     driver.state, driver._V_state, extra_hash_data="V"
-    # )
-    if step%10 == 0:
-        ψ = (
-            driver._V_state.to_sparse() @ driver.state.to_array()
-            if driver._V_state is not None
-            else driver.state.to_array()
-        )
-        pdf_ψ = jnp.abs(ψ) ** 2
-        
-        ϕ = (
-            driver._U_target.to_sparse() @ driver._target.to_array()
-            if driver._U_target is not None
-            else driver.target.to_array()
-        )
-        ϕ = ϕ / jnp.linalg.norm(ϕ)
+            pdf_ϕ = jnp.abs(ϕ) ** 2
 
-        pdf_ϕ = jnp.abs(ϕ) ** 2
+            E = jnp.sum(pdf_ϕ * ψ / ϕ)
+            floc = 1 - (ϕ / ψ * E)
 
-        E = jnp.sum(pdf_ϕ * ψ / ϕ)
-        floc = 1 - (ϕ / ψ * E)
+            logdata['inf_fs'] = jnp.sum(pdf_ψ * floc).real
 
-        logdata['inf_fs'] = jnp.sum(pdf_ψ * floc)
-
-    return True
+        return True
+    return _save_exact_infidelity
 
 def save_exact_err(fs_state, e_gs, save_every=1, output_dir=None):
     def cb_func(step, logdata, driver, fs_state, e_gs, save_every=1, output_dir=None):

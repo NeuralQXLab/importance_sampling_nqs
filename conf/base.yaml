@@ -4,7 +4,7 @@ defaults:
   - ansatz: rbm
   - task: vmc_gs
   - solver_fn: cholesky
-  - sampler: exchange
+  - sampler: exact
   - is_distrib: overdispersed
 
 auto_is: true
@@ -12,8 +12,6 @@ lr : 0.0022
 diag_shift : 1e-4
 callback_list: 
   - _target_ : grad_sample.utils.save_exact_err
-  - _target_ : grad_sample.utils.save_sampler_state
-    save_every: 250
 
 n_iter: 2000
 sample_size : 11

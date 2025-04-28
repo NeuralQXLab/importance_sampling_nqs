@@ -1,4 +1,4 @@
-_target_: deepnets.net.ptvmc.CNN
+_target_: grad_sample.ansatz.CNN
 # lattice: ${graph}
 kernel_size: 
   - 3

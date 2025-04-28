@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .legacy.earlystopping import EarlyStopping as EarlyStopping
+from .legacy.timeout import Timeout as Timeout
+from .legacy.invalidlossstopping import InvalidLossStopping as InvalidLossStopping
+from .legacy.convergence_stopping import ConvergenceStopping as ConvergenceStopping
+
 from .base import AbstractCallback as AbstractCallback
 from .callback_list import CallbackList as CallbackList
 from .legacy_wrappers import (

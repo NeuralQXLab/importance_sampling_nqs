@@ -1,0 +1,19 @@
+Help on package deepnets:
+
+NNAAMMEE
+    deepnets
+
+PPAACCKKAAGGEE  CCOONNTTEENNTTSS
+    config (package)
+    data (package)
+    expectation_value (package)
+    net (package)
+    optimization (package)
+    scripts (package)
+    system (package)
+    test (package)
+    tree (package)
+
+FFIILLEE
+    /mnt/beegfs/home/CPHT/antoine.misery/importance_sampling_nqs/packages/deepnets/__init__.py
+

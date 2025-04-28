@@ -16,12 +16,11 @@ from grad_sample.tasks import Base
 from grad_sample.utils import smart_instantiate
 from functools import partial
 import advanced_drivers as advd
-from infid_fs import infid_fs_cb
 from copy import copy, deepcopy
 
 class InfidelityMC(Base):
     def __init__(self, cfg:DictConfig):
-        super.__init__(cfg)
+        super().__init__(cfg)
 
         self.sample_size = self.cfg.get("sample_size")
         self.is_distrib = instantiate(self.cfg.is_distrib)
@@ -46,6 +45,7 @@ class InfidelityMC(Base):
         self.sampler = smart_instantiate(self.cfg.sampler, kwargs_hydra)
         
         self.vs_fs = nk.vqs.FullSumState.load(cfg.initial_state_path)
+
         self.vstate = nk.vqs.MCState(sampler= self.sampler, 
                                         model= self.ansatz, 
                                         chunk_size= self.chunk_size, 
@@ -54,6 +54,7 @@ class InfidelityMC(Base):
                                         variables=self.vs_fs.variables
                                     #  seed=0
                                     )
+        
         if "LogStateVector" in self.cfg.ansatz._target_:
             self.vstate.init_parameters()
         #     seed=cfg.seed_vs,
@@ -74,7 +75,7 @@ class InfidelityMC(Base):
         
         # Create the logger with the new filename
         self.json_log = nk.logging.JsonLog(output_prefix=self.output_dir)
-            
+        
         self.mc_driver = advd.driver.InfidelityOptimizerNG(
             target_state=self.ts,
             optimizer=self.opt,
@@ -94,7 +95,7 @@ class InfidelityMC(Base):
     def __call__(self):
         self.mc_driver.run(
             n_iter=self.n_iter, 
-            out=self.out_log, 
+            out=self.json_log, 
             callback=self.callbacks
         )
         log_opt = self.output_dir + ".log"

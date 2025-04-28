@@ -1,0 +1,2 @@
+_target_: ptvmc.nn.DiagonalWrapper
+param_dtype: complex
