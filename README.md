@@ -21,7 +21,14 @@ You can then explore the examples stored in the `notebooks` folder, or run your 
 ```bash
 python main.py --config_name n2_gs is_distrib.alpha=0.5
 ```
+## Details
 
+The core of the importance sampling code is stored in the `advanced_drivers` package. It implements new features based on NetKet's `AbstractVariationalDriver`. Besides standard keywords, implementing Importance Sampling revolves around two new arguments:
+
+ - `sampling_distribution` which should be a subclass of `AbstractDistribution`, also in the `advanced_drivers` package. For now, only a few are implemented :
+     - $|\psi(x)|^\alpha$ is implemented under the name `OverdispersedDistribution`.
+     - $|\bra{x}U\ket{\psi}|^\alpha$ where U is an operator, under the name `OverdispersedLinearOperatorDistribution`.
+ -  a boolean value `auto_is` to specify wether or not to use automatic tuning of the target distribution.
 ## Cite
 
 ## Further Information
