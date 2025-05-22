@@ -97,7 +97,19 @@ class VMC_GS(Base):
             self.output_dir = self.base_path + f"/{self.model.name}_{self.model.h}/L{self.model.graph.n_nodes}/{self.ansatz_name}/{self.alpha}/MC_{self.sample_size}/{self.lr}_{self.diag_exp}"
         else:
             raise NotImplementedError()
-        
+        # create dir if it doesn't already exist, if not in analysis mode
+        self.run_index = self.cfg.get("run_index")
+        if self.run_index == None:
+            run_index = 0
+            while True:
+                run_dir = os.path.join(self.output_dir, f"run_{run_index}")
+                if not os.path.exists(run_dir):
+                    os.makedirs(run_dir)
+                    self.output_dir = run_dir  # Update the output_dir to point to the newly created run_N folder
+                    break
+                run_index += 1
+        else :
+            self.output_dir = self.output_dir + '/run_%d'%self.run_index
         os.makedirs(self.output_dir, exist_ok=True)
         with open(os.path.join(self.output_dir, "config.yaml"), "w") as f:
             f.write(OmegaConf.to_yaml(self.cfg))

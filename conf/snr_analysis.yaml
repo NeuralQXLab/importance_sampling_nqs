@@ -1,0 +1,24 @@
+defaults:
+  - _self_
+  - model:  j1j2
+  - ansatz: cnn
+  - task: fullsum_gs
+  - solver_fn: cholesky
+
+ansatz:
+  n_hidden_units: 16
+
+n_iter : 500
+lr:
+  _target_: optax.linear_schedule
+  init_value: 0.1
+  transition_steps: 250
+  end_value: 0.01
+                           
+diag_shift: 1e-4
+
+callback_list: 
+  - _target_ : grad_sample.utils.compute_snr_callback
+  save_every: 10
+
+
