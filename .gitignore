@@ -176,3 +176,5 @@ cython_debug/
 # hydra output, cache logs
 out_log/
 outputs/
+
+.png

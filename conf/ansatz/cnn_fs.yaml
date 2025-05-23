@@ -1,0 +1,8 @@
+_target_: grad_sample.ansatz.CNN
+# lattice: ${graph}
+kernel_size: 
+  - 3
+  - 3
+channels: 
+  - 10
+  - 10

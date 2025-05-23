@@ -89,7 +89,7 @@ def save_mc_large_err(e_gs, n_s = 2**15, n_sites=None, save_every=1, output_dir=
             logdata['MC2_tau'] = energy.tau_corr
             
             if n_sites != None:
-                logdata["rel_err"] = (e/4/n_sites -e_gs)/jnp.abs(e_ref)
+                logdata["rel_err"] = (e/4/n_sites - e_gs)/jnp.abs(e_ref)
             else:
                 logdata["abs_err"] = jnp.abs(e-e_ref) #absolute error for qchem
                 logdata['rel_err'] = jnp.abs(e-e_ref)/jnp.abs(e_ref)

@@ -96,19 +96,14 @@ class Base:
         if hasattr(self.model, 'E_fci') and self.model.E_fci is not None:
             self.E_gs = self.model.E_fci
         else:
-            try :
-                try:
-                    self.e_dict = self.ref_energies[self.model.name][str(self.model.h)][str(int(self.model.graph.n_nodes**(1/self.model.graph.ndim)))]
-                    if 'exact' in self.e_dict.keys():
-                        self.E_ref = self.e_dict['exact']
-                    
-                except:
-                    self.E_gs = e_diag(self.model.hamiltonian.to_sparse())
-                    print("The ground state energy is:", self.E_gs)
+            try:
+                self.E_gs = e_diag(self.model.hamiltonian.to_sparse())
+                print("The ground state energy is:", self.E_gs)
             except : 
+                
                 self.E_gs = None
                 print('Hilbert space too large for exact diag, loading reference energy from litterature')
-                self.ref_energies = json.load(open("../../energy_ref_litt.json"))
+                self.ref_energies = json.load(open("./energy_ref_litt.json"))
             
                 self.e_dict = self.ref_energies[self.model.name][str(self.model.h)][str(int(self.model.graph.n_nodes**(1/self.model.graph.ndim)))]
                 if 'exact' in self.e_dict.keys():
@@ -130,7 +125,11 @@ class Base:
                         'sweep_size': self.model.hilbert_space.size,
                         'hamiltonian': self.model.hamiltonian,
                         'e_gs': self.E_gs,
-                        'H_sp': self.model.hamiltonian.to_sparse()}
+                        }
+        try :
+            self.kwargs_hydra['H_sp'] = self.model.hamiltonian.to_sparse()
+        except:
+            pass
         
         # Instantiate ansatz
         if "LogStateVector" in self.cfg.ansatz._target_:

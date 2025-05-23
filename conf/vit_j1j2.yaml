@@ -1,0 +1,30 @@
+defaults:
+  - _self_
+  - model:  j1j2
+  - ansatz: vit_large
+  - sampler: exchange
+  - task: vmc_gs
+  - solver_fn: cholesky
+  - is_distrib: overdispersed
+
+n_iter : 6000
+sample_size : 13
+
+lr:
+  _target_: optax.linear_schedule
+  init_value: 0.005
+  transition_steps: 2000
+  end_value: 0.001
+                         
+diag_shift:
+  _target_: optax.linear_schedule
+  init_value: 0.01
+  transition_steps: 3000
+  end_value: 0.0001
+
+callback_list: 
+  - _target_ : grad_sample.utils.save_mc_large_err
+    save_every: 50
+
+chunk_size_jac: 512
+auto_is : true

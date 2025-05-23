@@ -2,7 +2,7 @@ defaults:
   - _self_
   - model: lithium_oxide
   - ansatz: nnbf
-  - task: vmc_ng
+  - task: vmc_gs
   - solver_fn: cholesky
   - sampler: fermionhop
   - is_distrib: overdispersed

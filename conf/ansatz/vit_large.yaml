@@ -1,0 +1,7 @@
+_target_ : deepnets.net.ViT2D
+depth: 4
+d_model: 24
+heads: 12
+linear_patch_size: 2
+output_head_name: "Vanilla" #Vanilla/NoPatching
+expansion_factor: 1

@@ -1,24 +1,31 @@
 defaults:
   - _self_
-  - model:  j1j2
-  - ansatz: cnn
+  - model: j1j2
+  - ansatz: vit
   - task: fullsum_gs
   - solver_fn: cholesky
 
-ansatz:
-  n_hidden_units: 16
+model:
+  J: [1.0, 0.5]
+  L: 4
 
-n_iter : 500
+n_iter : 1000
 lr:
   _target_: optax.linear_schedule
-  init_value: 0.1
-  transition_steps: 250
-  end_value: 0.01
-                           
-diag_shift: 1e-4
+  init_value: 0.01
+  transition_steps: 200
+  end_value: 0.005
+                         
+diag_shift:
+  _target_: optax.linear_schedule
+  init_value: 0.01
+  transition_steps: 200
+  end_value: 1e-4
 
 callback_list: 
   - _target_ : grad_sample.utils.compute_snr_callback
-  save_every: 10
+    save_every: 10
+  - _target_ : grad_sample.utils.save_exact_err
+    save_every: 10
 
 

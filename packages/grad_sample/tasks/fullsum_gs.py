@@ -16,13 +16,14 @@ import matplotlib.pyplot as plt
 import optax
 
 from grad_sample.tasks import Base
+from grad_sample.utils import smart_instantiate
 from functools import partial
 import advanced_drivers as advd
 
 class FullSumGS(Base):
     def __init__(self, cfg: DictConfig):
         super().__init__(cfg)
-        self.output_dir = self.base_path + f"/{self.model.name}_{self.model.h}/L{self.model.graph.n_nodes}/{self.ansatz_name}/{self.alpha}/{self.lr}_{self.diag_exp}"
+        self.output_dir = self.base_path + f"/{self.model.name}_{self.model.h}/L{self.model.graph.n_nodes}/{self.ansatz_name}/{self.alpha}/schedule_schedule"
         # create dir if it doesn't already exist, if not in analysis mode
         self.run_index = self.cfg.get("run_index")
         if self.run_index == None:
@@ -41,7 +42,7 @@ class FullSumGS(Base):
         # Save the current config to the custom path
         with open(os.path.join(self.output_dir, "config.yaml"), "w") as f:
             f.write(OmegaConf.to_yaml(self.cfg))
-        if self.chunk_size_jac < self.model.hilbert_space.n_states:
+        if self.chunk_size_jac is not None and self.chunk_size_jac < self.model.hilbert_space.n_states:
             self.chunk_size = self.model.hilbert_space.n_states // (self.model.hilbert_space.n_states//self.chunk_size_jac)
         else:
             self.chunk_size = self.model.hilbert_space.n_states
@@ -64,19 +65,29 @@ class FullSumGS(Base):
                     variational_state=self.vstate, 
                     preconditioner=self.sr)
         
+        self.json_log = nk.logging.JsonLog(output_prefix=self.output_dir)
+        self.out_log = (self.json_log,)
+        self.kwargs_hydra['fs_state'] = self.vstate
+        self.kwargs_hydra['output_dir'] = self.output_dir
+        self.callbacks = (InvalidLossStopping(),)
+        
+        self.callback_list = self.cfg.get('callback_list', None)
+        if self.callback_list is not None:
+            self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, self.kwargs_hydra, mode='call') for cb in cfg.callback_list)
 
-        def __call__(self):
-            print('calling run')
-            self.gs.run(n_iter=self.n_iter, out=self.out_log, callback=self.callbacks)
-            
-            log_opt = self.output_dir + ".log"
-            data = json.load(open(log_opt))
 
-            E = jnp.array(data["Energy"]["Mean"]["real"])
-            
-            if self.plot_training_curve and (self.E_gs != None):
-                plt.plot(jnp.abs(E-self.E_gs)/jnp.abs(self.E_gs), label= "FS")
-                plt.title(f"Relative error w.r.t. exact GS during training")
-                plt.xlabel("iteration")
-                plt.ylabel("Relative error")
-                plt.yscale("log")
+    def __call__(self):
+        print('calling run')
+        self.gs.run(n_iter=self.n_iter, out=self.out_log, callback=self.callbacks)
+        
+        log_opt = self.output_dir + ".log"
+        data = json.load(open(log_opt))
+
+        E = jnp.array(data["Energy"]["Mean"]["real"])
+        
+        plt.plot(jnp.abs(E-self.E_gs)/jnp.abs(self.E_gs), label= "FS")
+        plt.title(f"Relative error w.r.t. exact GS during training")
+        plt.xlabel("iteration")
+        plt.ylabel("Relative error")
+        plt.yscale("log")
+        plt.savefig('out.png')

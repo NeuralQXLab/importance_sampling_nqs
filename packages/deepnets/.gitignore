@@ -2,3 +2,4 @@
 *.log
 *.out
 checkpoint**
+out_log/

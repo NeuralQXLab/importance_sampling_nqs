@@ -21,7 +21,6 @@ def autocorr_1d(x):
     if len(x.shape) != 1:
         raise ValueError("invalid dimensions for 1D autocorrelation function")
     n = next_pow_two(len(x))
-
     # Compute the FFT and then (from that) the auto-correlation function
     f = jnp.fft.fft(x - jnp.mean(x), n=2 * n)
     acf = jnp.fft.ifft(f * jnp.conjugate(f))[: len(x)].real
@@ -35,28 +34,20 @@ def auto_window(taus, c):
 
 
 def integrated_time(x, c=5):
-    """Estimate the integrated autocorrelation time of a time series.
-
-    This estimate uses the iterative procedure described on page 16 of
-    `Sokal's notes <https://www.semanticscholar.org/paper/Monte-Carlo-Methods-in-Statistical-Mechanics%3A-and-Sokal/0bfe9e3db30605fe2d4d26e1a288a5e2997e7225>`_
-    to determine a reasonable window size.
-
-    Args:
-        x: The time series.
-        c (Optional[float]): The step size for the window search. (default:
-            ``5``)
-
-    Returns:
-        float or array: An estimate of the integrated autocorrelation time of
-            the time series ``x``.
-    """
     if x.ndim != 1:
         raise ValueError("invalid shape")
-
+    print("x", x.shape, x.dtype)
     f = autocorr_1d(x)
+    print("f", f.shape, f.dtype)
     taus = 2.0 * jnp.cumsum(f) - 1.0
-    window = auto_window(taus, c)
-    return taus[window]
+    print("taus", taus.shape, taus.dtype)
+    print("c", c)
+    c = jnp.array(c, dtype=jnp.int32)
+    window = auto_window(taus, c).astype(jnp.int32)
+    print("auto_window", window.shape, window.dtype)
+    res = taus[window]
+    print("res", res.shape, res.dtype)
+    return res
 
 # Copyright 2021 The NetKet Authors - All rights reserved.
 #
@@ -90,7 +81,6 @@ import netket.jax as nkjax
 def _mean(a, w, axis=None, keepdims: bool = False):
     arr = a * w
     out = arr.mean(axis=axis, keepdims=keepdims)
-
     out, _ = mpi.mpi_mean_jax(out)
     return out
 
@@ -103,34 +93,27 @@ def sum(a, axis=None, keepdims: bool = False):
     else:
         # assume it's a scalar
         a_sum = jnp.asarray(a)
-
     out, _ = mpi.mpi_sum_jax(a_sum)
     return out
 
 
 def _var(a, w, axis=None, ddof: int = 0):
     m = _mean(a, w, axis=axis)
-
     if axis is None:
         ssq = (w ** 2.0) * jnp.abs(a - m) ** 2.0
     else:
         ssq = (w ** 2.0) * jnp.abs(a - jnp.expand_dims(m, axis)) ** 2.0
-
     out = sum(ssq, axis=axis)
-
     n_all = _total_size(a, axis=axis)
     out /= n_all - ddof
-
     return out
 
 
 def _total_size(a, axis=None):
-
     if axis is None:
         l_size = a.size
     else:
         l_size = a.shape[axis]
-
     return l_size * mpi.n_nodes
 
 def _format_decimal(value, std, var):
@@ -278,7 +261,7 @@ def _batch_variance(data, weights):
 
 
 # this is not batch_size maybe?
-def statistics(data, weights, batch_size=32):
+def statistics(data, weights):
     r"""
     Returns statistics of a given array (or matrix, see below) containing a stream of data.
     This is particularly useful to analyze Markov Chain data, but it can be used
@@ -310,7 +293,7 @@ def statistics(data, weights, batch_size=32):
              Gelman et al., `Bayesian Data Analysis <http://www.stat.columbia.edu/~gelman/book/>`_,
              or Vehtari et al., `arXiv:1903.08008 <https://arxiv.org/abs/1903.08008>`_.)
     """
-    return _statistics(data, weights, batch_size)
+    return _statistics(data, weights)
 
 
 # @partial(jax.jit, static_argnums=2)
@@ -453,8 +436,10 @@ def _split_R_hat(data, W):
 
 BLOCK_SIZE = 32
        
-@jax.jit
-def _statistics(data, weights, batch_size=32):
+#@jax.jit
+def _statistics(data, weights):
+    print("data", data.shape, data.dtype, data.sharding)
+    print("weights", weights.shape, weights.dtype, weights.sharding)
     data = jnp.atleast_1d(data)
     if data.ndim == 1:
         data = data.reshape((1, -1))

@@ -1,20 +1,31 @@
 defaults:
   - _self_
-  - model: heisenberg1d
-  - ansatz: vit1d
-  - sampler: exchange
-  - task: train
+  - model: j1j2
+  - ansatz: vit
+  - task: vmc_gs
   - solver_fn: cholesky
+  - sampler: exact
+  - is_distrib: overdispersed
 
-device: '6'
-is_mode : null
-auto_is : false
-lr : 0.001
-diag_shift : 1e-4
-n_iter : 6000
-sample_size : 9
-chunk_size_jac: 1024
-chunk_size_vmap : 100
-save_every : null
-run_index : null
-base_path : /scratch/.amisery/grad_sample_vit1d_runs_sample_comp/
+
+n_iter : 1000
+lr:
+  _target_: optax.linear_schedule
+  init_value: 0.005
+  transition_steps: 100
+  end_value: 0.002
+                         
+diag_shift:
+  _target_: optax.linear_schedule
+  init_value: 0.01
+  transition_steps: 200
+  end_value: 0.0001
+callback_list: 
+  - _target_ : grad_sample.utils.save_exact_err
+    save_every: 10
+
+
+sample_size : 13
+momentum : 0.9
+auto_is: false
+collect_gradient_statistics: false

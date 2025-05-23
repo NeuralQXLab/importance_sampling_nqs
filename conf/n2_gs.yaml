@@ -2,7 +2,7 @@ defaults:
   - _self_
   - model: nitrogen
   - ansatz: nnbf
-  - task: vmc_ng
+  - task: vmc_gs
   - solver_fn: cholesky
   - sampler: exact
   - is_distrib: overdispersed
@@ -21,7 +21,7 @@ diag_shift: 1e-4
 
 callback_list: 
   - _target_ : grad_sample.utils.save_exact_err
-  save_every: 10
+    save_every: 10
 
 chunk_size_jac: 1024
 chunk_size_vstate: 8192
