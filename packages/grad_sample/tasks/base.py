@@ -21,6 +21,11 @@ def to_sequence(arg):
         return arg
     
 class Base:
+    """
+    Base class to instantiate necessary objects for VMC/Infidelity minimization tasks
+    args:
+        -cfg: a hydra DictConfig created in the main script
+    """
     def __init__(self, cfg : DictConfig):
         self.cfg = deepcopy(cfg)
         nk.config.netket_enable_x64 = True

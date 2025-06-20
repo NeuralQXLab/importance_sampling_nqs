@@ -19,6 +19,9 @@ import advanced_drivers as advd
 from copy import copy, deepcopy
 
 class InfidelityMC(Base):
+    """
+    Task class for MC infidelity minimization
+    """
     def __init__(self, cfg:DictConfig):
         super().__init__(cfg)
 

@@ -132,7 +132,7 @@ class PI_controller_diagshift(AbstractCallback):
         linear_term = jnp.asarray(driver.info["linear_term"])
         quadratic_term = jnp.asarray(driver.info["quadratic_term"])
 
-        afun, vars, σ, weights, extra_args = driver._prepare_derivatives()
+        afun, vars, σ, weights, _, extra_args = driver._prepare_derivatives()
 
         model_state, params = fcore.pop(vars, "params")
         δθ = tree.map(lambda x: -α * x, driver._dp)

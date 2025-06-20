@@ -21,6 +21,9 @@ from functools import partial
 import advanced_drivers as advd
 
 class FullSumGS(Base):
+    """
+    Task class to perform a ground state optimization in Exact Summation
+    """
     def __init__(self, cfg: DictConfig):
         super().__init__(cfg)
         self.output_dir = self.base_path + f"/{self.model.name}_{self.model.h}/L{self.model.graph.n_nodes}/{self.ansatz_name}/{self.alpha}/schedule_schedule"

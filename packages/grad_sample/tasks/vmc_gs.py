@@ -39,6 +39,9 @@ def add_module(old_params: dict, new_params: dict, max_attempts: int = 10):
 
 
 class VMC_GS(Base):
+    """
+    Task class for ground state search with VMC
+    """
     def __init__(self, cfg: DictConfig):
         super().__init__(cfg)
 
