@@ -1,10 +1,10 @@
-# Importance Sampling Neural Quantum States
+# Importance Sampling for Neural Quantum States
 This repository holds the code for the paper 'Importance Sampling Neural Quantum States'.
 
 ## Content of the repository
  - `conf` : some yaml config files to replicate the results in the paper using hydra
  - `data` : the data used to produce the results in the paper
- - `packages` : the code to run the experiment. It is based on a modified version of `NetKet`.
+ - `packages` : the code to run the experiment. It is based on a modified version of `NetKet`. `advanced_drivers` modifies the `AbstractVariationalDriver` to incorporate additional features such as SPRING, MinSR, and in our case importance sampling. `ptvmc` and `deepnets` hold some model classes, such as the CNN and the Vision transformer (ViT). In `grad_sample`, you'll mostly find the training pipelines where you can load everything from a single yaml config file using hydra to run several experiments. `netket_pro` provides a few useful extra modifications to NetKet classes or Jax functions.
  - `notebooks` : notebooks that replicate small results in the paper, to get a better understanding of the code and play around with hyperparameters.
 
 ## To use:
