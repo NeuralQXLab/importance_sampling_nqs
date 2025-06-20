@@ -90,4 +90,4 @@ class FullSumGS(Base):
         plt.xlabel("iteration")
         plt.ylabel("Relative error")
         plt.yscale("log")
-        plt.savefig('out.png')
+        plt.savefig(self.output_dir + 'rel_err.png')

@@ -23,17 +23,17 @@ net:
 
 callback_list: 
   - _target_ : grad_sample.utils.save_exact_infidelity
-  # - _target_: advanced_drivers._src.callbacks.autodiagshift.PI_controller_diagshift
-  #   target: 0.9
-  #   safety_fac: 1.
-  #   clip_min: 0.5
-  #   clip_max: 2
-  #   diag_shift_min: 1e-9
-  #   diag_shift_max: 1e-1
-  #   order: 1
-  #   beta_1: 0.9
-  #   beta_2: 0.1
-  #   max_step_attempts: 5
+  - _target_: advanced_drivers._src.callbacks.autodiagshift.PI_controller_diagshift
+    target: 0.9
+    safety_fac: 1.
+    clip_min: 0.5
+    clip_max: 2
+    diag_shift_min: 1e-9
+    diag_shift_max: 1e-1
+    order: 1
+    beta_1: 0.9
+    beta_2: 0.1
+    max_step_attempts: 5
 
 initial_state_path: "./data/infidelity_states/state_1.25000.nk"
 final_state_path: "./data/infidelity_states/state_1.30000.nk"

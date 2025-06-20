@@ -19,7 +19,7 @@ lr:
 diag_shift:
   _target_: optax.linear_schedule
   init_value: 0.01
-  transition_steps: 200
+  transition_steps: 300
   end_value: 1e-4
 
 callback_list: 

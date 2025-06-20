@@ -36,17 +36,11 @@ def auto_window(taus, c):
 def integrated_time(x, c=5):
     if x.ndim != 1:
         raise ValueError("invalid shape")
-    print("x", x.shape, x.dtype)
     f = autocorr_1d(x)
-    print("f", f.shape, f.dtype)
     taus = 2.0 * jnp.cumsum(f) - 1.0
-    print("taus", taus.shape, taus.dtype)
-    print("c", c)
     c = jnp.array(c, dtype=jnp.int32)
     window = auto_window(taus, c).astype(jnp.int32)
-    print("auto_window", window.shape, window.dtype)
     res = taus[window]
-    print("res", res.shape, res.dtype)
     return res
 
 # Copyright 2021 The NetKet Authors - All rights reserved.
@@ -244,9 +238,7 @@ def _get_blocks(data, block_size):
 def _block_variance(data, weights, l):
     blocks = _get_blocks(data, l)
     blocks_w = _get_blocks(weights, l)
-    print(blocks.shape)
     ts = _total_size(blocks)
-    print(ts)
     if ts > 0:
         return _var(blocks, blocks_w), ts
     else:
@@ -438,8 +430,6 @@ BLOCK_SIZE = 32
        
 #@jax.jit
 def _statistics(data, weights):
-    print("data", data.shape, data.dtype, data.sharding)
-    print("weights", weights.shape, weights.dtype, weights.sharding)
     data = jnp.atleast_1d(data)
     if data.ndim == 1:
         data = data.reshape((1, -1))

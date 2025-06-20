@@ -1,5 +1,5 @@
 _target_ : deepnets.net.ViT2D
-depth: 3
+depth: 2
 d_model: 16
 heads: 4
 linear_patch_size: 1

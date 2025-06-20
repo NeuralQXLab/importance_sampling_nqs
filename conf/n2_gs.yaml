@@ -8,7 +8,7 @@ defaults:
   - is_distrib: overdispersed
 
 ansatz:
-  n_hidden_units: 16
+  hidden_units: 16
 
 n_iter : 500
 lr:

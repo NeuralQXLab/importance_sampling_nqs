@@ -13,7 +13,7 @@ dependencies = [
     "networkx>=3.4.0",
     "pubchempy==1.0.4",
     "pyscf==2.9.0",
-    "sparse>=0.15",
+    "sparse>=0.15, <0.16",
     "nqxpack>=0.1.1",
 ]
 [build-system]
