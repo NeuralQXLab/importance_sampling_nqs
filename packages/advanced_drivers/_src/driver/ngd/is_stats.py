@@ -43,6 +43,7 @@ def integrated_time(x, c=5):
     res = taus[window]
     return res
 
+
 # Copyright 2021 The NetKet Authors - All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,6 +68,7 @@ from netket.utils import config, mpi, struct
 from netket.jax.sharding import extract_replicated
 from functools import partial
 import netket.jax as nkjax
+
 # from . import mean as _mean
 # from . import var as _var
 # from . import total_size as _total_size
@@ -94,9 +96,9 @@ def sum(a, axis=None, keepdims: bool = False):
 def _var(a, w, axis=None, ddof: int = 0):
     m = _mean(a, w, axis=axis)
     if axis is None:
-        ssq = (w ** 2.0) * jnp.abs(a - m) ** 2.0
+        ssq = (w**2.0) * jnp.abs(a - m) ** 2.0
     else:
-        ssq = (w ** 2.0) * jnp.abs(a - jnp.expand_dims(m, axis)) ** 2.0
+        ssq = (w**2.0) * jnp.abs(a - jnp.expand_dims(m, axis)) ** 2.0
     out = sum(ssq, axis=axis)
     n_all = _total_size(a, axis=axis)
     out /= n_all - ddof
@@ -109,6 +111,7 @@ def _total_size(a, axis=None):
     else:
         l_size = a.shape[axis]
     return l_size * mpi.n_nodes
+
 
 def _format_decimal(value, std, var):
     if math.isfinite(std) and std > 1e-7:
@@ -403,6 +406,7 @@ def statistics(data, weights):
 
 #     return res
 
+
 def _split_R_hat(data, W):
     N = data.shape[-1]
     # if not config.netket_use_plain_rhat:
@@ -427,8 +431,9 @@ def _split_R_hat(data, W):
 
 
 BLOCK_SIZE = 32
-       
-#@jax.jit
+
+
+# @jax.jit
 def _statistics(data, weights):
     data = jnp.atleast_1d(data)
     if data.ndim == 1:
@@ -441,14 +446,14 @@ def _statistics(data, weights):
     mean = _mean(data, weights)
     variance = _var(data, weights)
 
-    taus = jax.vmap(integrated_time)(data*weights)
+    taus = jax.vmap(integrated_time)(data * weights)
     tau_avg, _ = mpi.mpi_mean_jax(jnp.mean(taus))
     tau_max, _ = mpi.mpi_max_jax(jnp.max(taus))
 
     batch_var, n_batches = _batch_variance(data, weights)
     if n_batches > 1:
         error_of_mean = jnp.sqrt(batch_var / n_batches)
-        R_hat = _split_R_hat(data*weights, variance)
+        R_hat = _split_R_hat(data * weights, variance)
     else:
         l_block = max(1, data.shape[1] // BLOCK_SIZE)
         block_var, n_blocks = _block_variance(data, weights, l_block)

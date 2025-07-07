@@ -4,6 +4,7 @@ from advanced_drivers._src.driver.ngd.distribution_constructors.abstract_distrib
     AbstractDistribution,
 )
 
+
 class default_distribution(AbstractDistribution):
     # default log-distribution to sample from
     # In the case of VMC, will return log \psi

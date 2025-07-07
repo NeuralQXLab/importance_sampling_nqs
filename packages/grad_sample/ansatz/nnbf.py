@@ -5,8 +5,10 @@ from typing import Any
 import jax
 
 from netket.nn.masked_linear import default_kernel_init
- 
+
 DType = Any
+
+
 class MLP(nn.Module):
     n_layers: int
     n_features: int
@@ -19,12 +21,19 @@ class MLP(nn.Module):
     @nn.compact
     def __call__(self, x):
         for _ in range(self.n_layers):
-            x = nn.Dense(self.n_features, param_dtype=self.param_dtype, kernel_init=self.kernel_init)(x)
+            x = nn.Dense(
+                self.n_features,
+                param_dtype=self.param_dtype,
+                kernel_init=self.kernel_init,
+            )(x)
             x = self.hidden_activation(x)
-        x = nn.Dense(self.n_out, param_dtype=self.param_dtype, kernel_init=self.kernel_init)(x)
+        x = nn.Dense(
+            self.n_out, param_dtype=self.param_dtype, kernel_init=self.kernel_init
+        )(x)
         x = self.out_activation(x)
         return x
-    
+
+
 from functools import partial
 from typing import Any
 
@@ -68,36 +77,39 @@ class Backflow_noMF(nn.Module):
     """
     graph: Any = None
     enforce_spin_flip: bool = False
-    mean_field_init: str = 'default'
+    mean_field_init: str = "default"
     param_dtype: Any = float
     initializer: NNInitFunc = nn.initializers.he_uniform()
 
     def batch_spin_flip(self, n):
-
         """From a batch of samples, include the spin-flipped states."""
 
         if self.hilbert.n_fermions_per_spin[0] != self.hilbert.n_fermions_per_spin[1]:
-            raise ValueError("Spin sectors must have the same number of fermions in order to +\
-                             enforce spin-flip symmetry.")
-        
-        n_flip = jnp.concatenate([ n[:,self.hilbert.n_orbitals:], n[:,:self.hilbert.n_orbitals]], axis=1)
+            raise ValueError(
+                "Spin sectors must have the same number of fermions in order to +\
+                             enforce spin-flip symmetry."
+            )
+
+        n_flip = jnp.concatenate(
+            [n[:, self.hilbert.n_orbitals :], n[:, : self.hilbert.n_orbitals]], axis=1
+        )
         n = jnp.concatenate([n, n_flip], axis=0)
         return n
-    
-    def psi_eval_spin_flip(self, logpsi):
 
+    def psi_eval_spin_flip(self, logpsi):
         """From a batch of log-amplitudes that include the spin-flipped states,
         return the log amplitudes projected onto the spin-flip symmetric subspace."""
 
-        logpsi_flipped = logpsi.reshape((-1,2), order='F') #reshape to (Nbatch, Nsymm=2) [log(psi(sigma)), log(psi(Psigma))]
-        logpsi_symm = logsumexp_cplx(a = logpsi_flipped, b = 1/2, axis=1)
+        logpsi_flipped = logpsi.reshape(
+            (-1, 2), order="F"
+        )  # reshape to (Nbatch, Nsymm=2) [log(psi(sigma)), log(psi(Psigma))]
+        logpsi_symm = logsumexp_cplx(a=logpsi_flipped, b=1 / 2, axis=1)
         return logpsi_symm
-    
-    
+
     @nn.compact
     def __call__(self, n):
 
-        #spin flipped samples
+        # spin flipped samples
         if self.enforce_spin_flip:
             n = self.batch_spin_flip(n)
 
@@ -122,14 +134,15 @@ class Backflow_noMF(nn.Module):
             A_d = M[:, self.hilbert.n_fermions_per_spin[0] :][R_d]
 
             return _log_det(A_u) + _log_det(A_d)
-        
+
         log_slater = log_sdj(n, F)
 
-        #project on spin flip subspace
+        # project on spin flip subspace
         if self.enforce_spin_flip:
             log_slater = self.psi_eval_spin_flip(log_slater)
 
         return log_slater
+
 
 class LogNeuralBackflow(nn.Module):
     hilbert: nk.hilbert.SpinOrbitalFermions
@@ -141,13 +154,16 @@ class LogNeuralBackflow(nn.Module):
     def setup(self):
         """Initialize model parameters."""
         # The N x Nf matrix of the orbitals
-        self.backflow = Backflow_noMF(model = MLP(n_layers=1,
-                                                n_features = self.hilbert.size,
-                                                hidden_activation= nn.gelu,
-                                                n_out = self.hilbert.n_orbitals * self.hilbert.n_fermions,
-                                                    ),
-                                    hilbert = self.hilbert,
-                                    enforce_spin_flip=True)  
+        self.backflow = Backflow_noMF(
+            model=MLP(
+                n_layers=1,
+                n_features=self.hilbert.size,
+                hidden_activation=nn.gelu,
+                n_out=self.hilbert.n_orbitals * self.hilbert.n_fermions,
+            ),
+            hilbert=self.hilbert,
+            enforce_spin_flip=True,
+        )
 
     def __call__(self, n: jax.Array) -> jax.Array:
         """Vectorized computation over batches."""

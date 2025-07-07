@@ -3,14 +3,15 @@ from netket.utils.types import Array
 from .system.base import Spin_Half
 import jax.numpy as jnp
 
+
 class Heisenberg1d(Spin_Half):
     def __init__(self, L=16, J=[1.0], sign_rule=[0.0], acting_on_subspace=0):
         super().__init__(N=int(L), L=L, J=J, sz_sector=0)
         if len(J) == 1:
             self.name = "heisenberg1d"
             self.h = J[0]
-        else :
-            self.name = 'J1J21d'
+        else:
+            self.name = "J1J21d"
             self.h = J[1]
         self.Ns = L
         self.L = L
@@ -18,15 +19,22 @@ class Heisenberg1d(Spin_Half):
         self.acting_on_subspace = acting_on_subspace
 
         self.graph = nk.graph.Chain(L, max_neighbor_order=len(J), pbc=True)
-        
-        self.hamiltonian = nk.operator.Heisenberg(hilbert=self.hilbert_space, graph=self.graph, J=J, sign_rule=self.sign_rule, acting_on_subspace=self.acting_on_subspace)
-    
+
+        self.hamiltonian = nk.operator.Heisenberg(
+            hilbert=self.hilbert_space,
+            graph=self.graph,
+            J=J,
+            sign_rule=self.sign_rule,
+            acting_on_subspace=self.acting_on_subspace,
+        )
+
     @staticmethod
     def extract_patches1d(x, b):
         # This might not work, may need to add a batch dimension as in extract_patches2d
         # return rearrange(x, "(L_eff b) -> L_eff b", b=b)
-        return  x.reshape(*x.shape[:-1], -1, b)
-    
+        return x.reshape(*x.shape[:-1], -1, b)
+
+
 class XXZ(Spin_Half):
     def __init__(self, L=10, J=1.5):
         super().__init__(N=int(L), L=L, J=jnp.array([J]), sz_sector=0)
@@ -34,14 +42,26 @@ class XXZ(Spin_Half):
         self.Ns = L
         self.L = L
         self.h = J
-        
+
         self.graph = nk.graph.Chain(L, pbc=True)
-        
-        self.hilbert_space = nk.hilbert.Spin(s=1/2, N=self.graph.n_nodes, total_sz=0, inverted_ordering=False)
-        
+
+        self.hilbert_space = nk.hilbert.Spin(
+            s=1 / 2, N=self.graph.n_nodes, total_sz=0, inverted_ordering=False
+        )
+
         self.hamiltonian = 0
         for i in range(L):
-            self.hamiltonian += nk.operator.spin.sigmax(self.hilbert_space,i)*nk.operator.spin.sigmax(self.hilbert_space,(i+1)%self.L) + nk.operator.spin.sigmay(self.hilbert_space,i)*nk.operator.spin.sigmay(self.hilbert_space,(i+1)%self.L) + self.h*(nk.operator.spin.sigmaz(self.hilbert_space,i)*nk.operator.spin.sigmaz(self.hilbert_space,(i+1)%self.L))
+            self.hamiltonian += (
+                nk.operator.spin.sigmax(self.hilbert_space, i)
+                * nk.operator.spin.sigmax(self.hilbert_space, (i + 1) % self.L)
+                + nk.operator.spin.sigmay(self.hilbert_space, i)
+                * nk.operator.spin.sigmay(self.hilbert_space, (i + 1) % self.L)
+                + self.h
+                * (
+                    nk.operator.spin.sigmaz(self.hilbert_space, i)
+                    * nk.operator.spin.sigmaz(self.hilbert_space, (i + 1) % self.L)
+                )
+            )
         # op = nk.operator.GraphOperator(self.hi, graph=self.lattice, bond_ops=bond_operator)
         # self.H = nk.operator.Heisenberg(hilbert=self.hi, graph=self.lattice, J=self.h, sign_rule=self.sign_rule, acting_on_subspace=self.acting_on_subspace)
 
@@ -49,8 +69,9 @@ class XXZ(Spin_Half):
     def extract_patches1d(x, b):
         # This might not work, may need to add a batch dimension as in extract_patches2d
         # return rearrange(x, "(L_eff b) -> L_eff b", b=b)
-        return  x.reshape(*x.shape[:-1], -1, b)
-    
+        return x.reshape(*x.shape[:-1], -1, b)
+
+
 class XXZ2d(Spin_Half):
 
     def __init__(self, L=4, h=1.5):
@@ -59,17 +80,27 @@ class XXZ2d(Spin_Half):
         self.Ns = L
         self.L = L
         self.h = h
-        
+
         self.graph = nk.graph.Square(L, pbc=True)
-        
+
         # self.hilbert_space = nk.hilbert.Spin(s=1/2, N=self.graph.n_nodes, total_sz=0, inverted_ordering=False)
-        
+
         self.hamiltonian = 0
-        for (i,j) in self.graph.edges():
-            self.hamiltonian += nk.operator.spin.sigmax(self.hilbert_space,i)*nk.operator.spin.sigmax(self.hilbert_space,j) + nk.operator.spin.sigmay(self.hilbert_space,i)*nk.operator.spin.sigmay(self.hilbert_space,j) + self.h*(nk.operator.spin.sigmaz(self.hilbert_space,i)*nk.operator.spin.sigmaz(self.hilbert_space,j))
+        for i, j in self.graph.edges():
+            self.hamiltonian += (
+                nk.operator.spin.sigmax(self.hilbert_space, i)
+                * nk.operator.spin.sigmax(self.hilbert_space, j)
+                + nk.operator.spin.sigmay(self.hilbert_space, i)
+                * nk.operator.spin.sigmay(self.hilbert_space, j)
+                + self.h
+                * (
+                    nk.operator.spin.sigmaz(self.hilbert_space, i)
+                    * nk.operator.spin.sigmaz(self.hilbert_space, j)
+                )
+            )
         # op = nk.operator.GraphOperator(self.hi, graph=self.lattice, bond_ops=bond_operator)
         # self.H = nk.operator.Heisenberg(hilbert=self.hi, graph=self.lattice, J=self.h, sign_rule=self.sign_rule, acting_on_subspace=self.acting_on_subspace)
-        
+
     @staticmethod
     def extract_patches_as1d(x, b):
         """
@@ -114,4 +145,3 @@ class XXZ2d(Spin_Half):
         )  # (nbatch, x, y)
         x = x.reshape(x.shape + (1,))  # shape (nbatch, x, y, 1)
         return x
-    

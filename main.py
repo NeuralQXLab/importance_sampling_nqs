@@ -1,6 +1,7 @@
 """
 Script for running the experiments.
 """
+
 from __future__ import annotations
 import logging
 import os
@@ -13,6 +14,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf, open_dict
 
 logging.basicConfig(level=logging.INFO)
+
 
 @hydra.main(version_base=None, config_path="./conf", config_name="base")
 def main(cfg: DictConfig):
@@ -31,9 +33,9 @@ def main(cfg: DictConfig):
     # if not cfg.get("out_dir"):
     #     cfg.out_dir = str(out_dir)
     # logging.info("Solver output path: %s", cfg.out_dir)
-   
+
     OmegaConf.set_struct(cfg, True)
-    
+
     # Log config and overrides
     logging.info("---------------------------------------------------------------")
     logging.info("Run config:\n%s", OmegaConf.to_yaml(cfg, resolve=True))
@@ -43,8 +45,8 @@ def main(cfg: DictConfig):
         # take any task from cfg and run it
         device = cfg.get("device")
         # set working device
-        if device != None :
-            os.environ["CUDA_VISIBLE_DEVICES"]= str(device)
+        if device != None:
+            os.environ["CUDA_VISIBLE_DEVICES"] = str(device)
         task = instantiate(cfg.task, cfg)
         task()
 

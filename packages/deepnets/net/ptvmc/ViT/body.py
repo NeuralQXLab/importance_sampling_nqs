@@ -78,13 +78,13 @@ class FMHA(nn.Module):
 
             sq_L_eff = int(self.L_eff**0.5)
             assert sq_L_eff * sq_L_eff == self.L_eff
-            
+
             self.J = roll2d(
                 self.J, jnp.arange(sq_L_eff), jnp.arange(sq_L_eff)
             )  # [h, sqrt(L_eff), sqrt(L_eff), L_eff]
 
             self.J = self.J.reshape(self.h, -1, self.L_eff)  # [h, L_eff, L_eff]
-            
+
         else:
             self.J = self.param(
                 "J",

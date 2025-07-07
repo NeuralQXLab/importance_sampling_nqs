@@ -228,7 +228,6 @@ class AbstractVariationalDriver(struct.Pytree, mutable=True):
         """
         return self._step_count
 
-    
     def run(
         self,
         n_iter: int,

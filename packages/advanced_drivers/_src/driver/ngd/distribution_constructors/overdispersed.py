@@ -8,6 +8,7 @@ from advanced_drivers._src.driver.ngd.distribution_constructors.abstract_distrib
 )
 import jax
 
+
 class overdispersed_distribution(AbstractDistribution):
     r"""
     Overdispersed distribution:
@@ -31,13 +32,17 @@ class overdispersed_distribution(AbstractDistribution):
 
     def compute_log_grad_c(self, afun: Callable, new_variables: PyTree, samples):
         variables, alpha = fcore.pop(new_variables, "alpha")
-        log_mod =  jnp.real(afun(variables, samples))
-        return {'alpha': log_mod - jnp.mean(log_mod)}
-    
-    def update_params(self, grad_snr, lr: float = 2e-1, clip: float =0.1):
-        update = jax.tree_util.tree_map(lambda x : jnp.clip(lr * x, -clip, clip), grad_snr)
-        self.q_variables = jax.tree_util.tree_map(lambda x,y : x + y, self.q_variables, update)
-    
+        log_mod = jnp.real(afun(variables, samples))
+        return {"alpha": log_mod - jnp.mean(log_mod)}
+
+    def update_params(self, grad_snr, lr: float = 2e-1, clip: float = 0.1):
+        update = jax.tree_util.tree_map(
+            lambda x: jnp.clip(lr * x, -clip, clip), grad_snr
+        )
+        self.q_variables = jax.tree_util.tree_map(
+            lambda x, y: x + y, self.q_variables, update
+        )
+
 
 class overdispersed_mixture_distribution(AbstractDistribution):
     r"""
@@ -77,4 +82,3 @@ def aux_fun_mixture(afun, alpha, new_variables, x):
     return (1 / 2) * jnp.log(
         jnp.mean((jnp.exp(jnp.real(log_psi))[:, None]) ** alpha, axis=1)
     )
-

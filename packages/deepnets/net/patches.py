@@ -4,7 +4,7 @@ from einops import rearrange
 def extract_patches1d(x, b):
     # This might not work, may need to add a batch dimension as in extract_patches2d
     # return rearrange(x, "(L_eff b) -> L_eff b", b=b)
-    return  x.reshape(*x.shape[:-1], -1, b)
+    return x.reshape(*x.shape[:-1], -1, b)
 
 
 def extract_patches2d(x, b):

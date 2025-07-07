@@ -2,6 +2,7 @@
 from .CNN import ConvReLU, final_actfn
 from .base_wrapper import NetBase
 import argparse
+
 # import deepnets.system as system
 import json
 from deepnets.net import ViT
@@ -30,9 +31,7 @@ class ResCNN(NetBase):
     def read_arguments(args: argparse.Namespace):
         return args.depth, args.features, args.kernel_width
 
-    def __init__(
-        self, depth: int, features: int, kernel_width: int, system
-    ):
+    def __init__(self, depth: int, features: int, kernel_width: int, system):
         self.name = "ResCNN"
         self.depth = depth
         self.features = features
@@ -121,7 +120,7 @@ class ViT2D(NetBase):
         linear_patch_size: int,
         output_head_name: str,
         expansion_factor: int,
-        system
+        system,
     ):
         self.name = "ViT2D"
         self.depth = depth
@@ -160,8 +159,10 @@ class ViT2D(NetBase):
         return arg_dict
 
 
-
-networks = {"ResCNN": ResCNN, "ViT2D": ViT2D,}
+networks = {
+    "ResCNN": ResCNN,
+    "ViT2D": ViT2D,
+}
 
 
 def from_dict(arg_dict: dict, system, network_name="ConvNext"):

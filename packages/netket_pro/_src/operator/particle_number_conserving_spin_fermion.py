@@ -353,10 +353,8 @@ class ParticleNumberConservingFermioperator2ndSpinJax(DiscreteJaxOperator):
         H = a + Σ_ijσ b_ij c_iσ^† c_jσ + Σ_ijklσρ c_ijkl  c_iσ^† c_jρ^† c_kρ c_lσ
 
     """
-    def __init__(self, 
-                 hilbert:SpinOrbitalFermions,
-                 operator_data, 
-                 max_conn_size):
+
+    def __init__(self, hilbert: SpinOrbitalFermions, operator_data, max_conn_size):
 
         self._hilbert = hilbert
         self._operator_data = operator_data
@@ -372,7 +370,7 @@ class ParticleNumberConservingFermioperator2ndSpinJax(DiscreteJaxOperator):
     @classmethod
     def tree_unflatten(cls, aux_data, children):
         _hilbert, _max_conn_size = aux_data
-        _operator_data, = children
+        (_operator_data,) = children
         return cls(_hilbert, _operator_data, _max_conn_size)
 
     @property
@@ -588,8 +586,9 @@ def _tno_sector_to_operators_sector(
             raise NotImplementedError
     return operators_sector
 
+
 jax.tree_util.register_pytree_node(
     ParticleNumberConservingFermioperator2ndSpinJax,
     ParticleNumberConservingFermioperator2ndSpinJax.tree_flatten,
-    ParticleNumberConservingFermioperator2ndSpinJax.tree_unflatten
+    ParticleNumberConservingFermioperator2ndSpinJax.tree_unflatten,
 )
