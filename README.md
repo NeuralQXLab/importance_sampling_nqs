@@ -13,6 +13,13 @@ First clone the repository, then install the package doing:
 ```bash
 git clone https://github.com/NeuralQXLab/importance_sampling_nqs.git
 cd importance_sampling_nqs
+uv sync
+```
+
+By using [uv](https://docs.astral.sh/uv/getting-started/installation/) you will get the EXACT same dependencies that we used and are guaranteed to work, which are recorded into the uv.lock file.
+You can also use pip, but we strongly discourage you from doing so. 
+To use pip instead, do
+```bash
 pip install -e .
 ```
 
@@ -20,24 +27,28 @@ You can then explore the examples stored in the `notebooks` folder, or run your 
 Here are a list of commands to replicate the main results of the paper:
 - Nitrogen ground state. Here we set the sampling distribution to be $|\psi|^{\frac12}$ 
 ```bash
-python main.py --config_name n2_gs is_distrib.alpha=0.5
+uv run main.py --config-name n2_gs is_distrib.alpha=0.5
 ```
 - Lithium oxide ground state, with adaptive tuning starting at $|\psi|$ for more stability
 ```bash
-python main.py --config_name li2o_gs is_distrib.alpha=1.0 auto_is=true
+uv run main.py --config-name li2o_gs is_distrib.alpha=1.0 auto_is=true
 ```
 - J1J2 with a ViT, on the 6x6 square lattice:
 ```bash
-python main.py --config_name vit_j1j2 is_distrib.alpha=2.0 auto_is=true model.L=6
+uv run  main.py --config-name vit_j1j2 is_distrib.alpha=2.0 auto_is=true model.L=6
 ```
 - Signal-to-noise ratio study on the nitrogen molecule:
 ```bash
-python main.py --config_name snr_analysis model=nitrogen ansatz=nnbf ansatz.hidden_units=32
+uv run main.py --config-name snr_analysis model=nitrogen ansatz=nnbf ansatz.hidden_units=32
 ```
 - Infidelity minimization:
 ```bash
-python main.py --config_name infidelity_tfi
+uv run main.py --config-name infidelity_tfi
 ```
+
+### Note: no uv
+If you do not want to use uv, then simply replace `uv run` with `python` in the commands above.
+
 
 ## Details
 

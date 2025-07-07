@@ -132,7 +132,6 @@ class VMC_GS(Base):
         
         self.kwargs_hydra['fs_state'] = FullSumState(hilbert = self.gs.state.hilbert, 
                                         model = self.gs.state.model, 
-                                        chunk_size=self.chunk_size_vstate, 
                                         seed=0)
         self.kwargs_hydra['output_dir'] = self.output_dir
         # self.autodiagshift = advd.callbacks.PI_controller_diagshift(diag_shift_max=0.01, diag_shift_min=1e-6, safety_fac=1.0, clip_min=0.99, clip_max=1.01)
