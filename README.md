@@ -1,5 +1,7 @@
 # Importance Sampling for Neural Quantum States
-This repository holds the code for the paper 'Importance Sampling Neural Quantum States'.
+[![arXiv](https://img.shields.io/badge/arXiv-2507.05352-b31b1b.svg)](https://arxiv.org/abs/2507.05352)
+
+This repository holds the code for the paper '[Looking elsewhere: improving variational Monte Carlo gradients by importance sampling](https://arxiv.org/abs/2507.05352)'.
 
 ## Content of the repository
  - `conf` : some yaml config files to replicate the results in the paper using hydra
