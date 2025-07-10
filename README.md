@@ -64,7 +64,18 @@ The core of the importance sampling code is stored in the `advanced_drivers` pac
  For a deeper dive in the code, you can look at `./packages/advanced_drivers/_src/driver/ngd/driver_abstract_ngd.py`, `./packages/advanced_drivers/_src/driver/ngd/sr_srt_common.py` which hold most of the importance sampling machinery. The weights are computed in the `_prepare_derivatives` function in the driver. The reweighting is then done in the function `_prepare_input` in `sr_srt_common.py`. The function for adaptive tuning is `_compute_snr_derivative` and can in `sr.py` in the same folder.
 
 ## Cite
-
+If you use this code in your work, please cite the associated paper:
+```
+@article{misery2025lookingelsewhereimprovingvariational,
+      title={Looking elsewhere: improving variational Monte Carlo gradients by importance sampling}, 
+      author={Antoine Misery and Luca Gravina and Alessandro Santini and Filippo Vicentini},
+      year={2025},
+      eprint={2507.05352},
+      archivePrefix={arXiv},
+      primaryClass={quant-ph},
+      url={https://arxiv.org/abs/2507.05352}, 
+}
+```
 ## Further Information
 For further questions about what is in the repository, contact antoine.misery@polytechnique.edu.
 
