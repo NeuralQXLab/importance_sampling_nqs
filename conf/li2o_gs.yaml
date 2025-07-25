@@ -17,17 +17,18 @@ lr:
 diag_shift:
   _target_: optax.linear_schedule
   init_value: 5e-3
-  end_value: 1e-5,
+  end_value: 1e-5
   transition_steps: 500
 
 callback_list: 
-  - _target_ : grad_sample.utils.save_err_approx
-  - _target_ : grad_sample.utils.save_sampler_state
-    save_every: 250
+  # - _target_ : grad_sample.utils.save_mc_large_err
+  #   save_every: 50
+  # - _target_ : grad_sample.utils.save_sampler_state
+  #   save_every: 250
 
 chunk_size_jac: 1024
 chunk_size_vstate: 8192
-
+full_sum_eval: False
 sample_size : 13
 momentum : 0.9
 auto_is: false

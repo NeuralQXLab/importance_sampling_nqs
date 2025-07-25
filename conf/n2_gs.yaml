@@ -30,3 +30,4 @@ sample_size : 10
 momentum : 0.9
 auto_is: false
 collect_gradient_statistics: false
+fullsum_eval: true

@@ -42,7 +42,7 @@ class Base:
 
         self.save_every = self.cfg.get("save_every")
         self.ckpt = self.cfg.get('ckpt')
-        
+        self.fullsum_eval = self.cfg.get('fullsum_eval', False)
         self.base_path = '././out_log/'
 
         n_iter = self.n_iter
@@ -96,7 +96,7 @@ class Base:
         # define optimizer
         self.opt = optax.sgd(learning_rate=self.lr)
         # self.opt = optax.inject_hyperparams(optax.sgd)(learning_rate=self.lr) #used with autodiagshift
-    
+        print(self.model.E_fci)
         # code only support default and overdispersed distribution for naming right now
         if hasattr(self.model, 'E_fci') and self.model.E_fci is not None:
             self.E_gs = self.model.E_fci
@@ -131,10 +131,8 @@ class Base:
                         'hamiltonian': self.model.hamiltonian,
                         'e_gs': self.E_gs,
                         }
-        try :
+        if self.fullsum_eval:
             self.kwargs_hydra['H_sp'] = self.model.hamiltonian.to_sparse()
-        except:
-            pass
         
         # Instantiate ansatz
         if "LogStateVector" in self.cfg.ansatz._target_:

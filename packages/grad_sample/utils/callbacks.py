@@ -15,6 +15,7 @@ def save_cb(step, logdata, driver):
     dp, _ = nkjax.tree_ravel(dp)
     logdata["dp"] = dp
     return True
+
 def save_exact_infidelity():
     def _save_exact_infidelity(step, logdata, driver):
         # samples = driver.state._all_states
@@ -168,6 +169,12 @@ def compute_snr_callback(fs_state:FullSumState, H_sp, save_every=10, chunk_size_
                 v = jnp.sum(q_pdf * (unnorm_pdf(2.0)/q)**2 * jnp.abs(loc_grad_v - jnp.sum(pdf * loc_grad_v, axis=1)[:, None])**2, axis=1)/w_mean
                 return jnp.mean(jnp.abs(jnp.sum(pdf * loc_grad_v, axis = 1)) / jnp.sqrt(v))
 
+            def compute_snr_multipdf(q):
+                q_pdf = q / jnp.sum(q, axis=1)[:, None]
+                w_mean = jnp.sum(q_pdf * unnorm_pdf(2.0)[None,:]/q, axis=1)**2
+                v = jnp.sum(q_pdf * (unnorm_pdf(2.0)[None,:]/q)**2 * jnp.abs(loc_grad_v - jnp.sum(pdf * loc_grad_v, axis=1)[:, None])**2, axis=1)/w_mean
+                return jnp.mean(jnp.abs(jnp.sum(pdf * loc_grad_v, axis = 1)) / jnp.sqrt(v))
+            
             a_vals = jnp.linspace(0.01, 2, 200)
             snr_a = jnp.array([compute_snr(unnorm_pdf(a)) for a in a_vals])
             
@@ -177,9 +184,17 @@ def compute_snr_callback(fs_state:FullSumState, H_sp, save_every=10, chunk_size_
             argmax_index = jnp.argmax(snr_a)
             argmax_a = a_vals[argmax_index]
             # print(jnp.mean(unnorm_pdf(2.0) * jnp.abs(loc_grad_v), axis=0).shape)
-            snr_grad = compute_snr(jnp.mean(unnorm_pdf(2.0) * jnp.abs(loc_grad_v), axis=0))
+            snr_grad0 = compute_snr(jnp.mean(unnorm_pdf(2.0) * jnp.abs(loc_grad_v), axis=0))
+            snr_gradb = compute_snr_multipdf(jnp.tile(jnp.mean(unnorm_pdf(2.0) * jnp.abs(loc_grad_v), axis=0), (loc_grad_v.shape[0],1)))
+            snr_mean_cgrad = compute_snr(jnp.mean(unnorm_pdf(2.0) * (jnp.abs(loc_grad_v - jnp.sum(pdf * loc_grad_v, axis=1)[:, None])), axis = 0))
+            snr_grad = compute_snr_multipdf(unnorm_pdf(2.0) * jnp.abs(loc_grad_v))
+            snr_cgrad = compute_snr_multipdf(unnorm_pdf(2.0) * (jnp.abs(loc_grad_v - jnp.sum(pdf * loc_grad_v, axis=1)[:, None])))
             logdata['snr_a'] = snr_a[::20]
+            logdata['snr_mean_grad'] = snr_grad0
+            logdata['snr_mean_cgrad'] = snr_mean_cgrad
             logdata['snr_grad'] = snr_grad
+            logdata['snr_cgrad'] = snr_cgrad
+            logdata['snr_grad_diff'] = snr_gradb - snr_grad0
             logdata['max_snr_a'] = jnp.max(snr_a)
             logdata['argmax_snr_a'] = argmax_a
             logdata['snr_psi_sq'] = compute_snr(unnorm_pdf(2.0))

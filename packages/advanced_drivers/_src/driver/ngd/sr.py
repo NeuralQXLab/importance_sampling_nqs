@@ -38,6 +38,8 @@ def _compute_sr_update(
     weights,
     is_jac: Optional[PyTree] = None
 ):
+    if momentum is not None:
+        dv -= momentum * (O_L @ old_updates)
     # We concretize the solver function to ensure it accepts the additional argument `dv`.
     # Typically solvers only accept the matrix and the right-hand side.
     solver_fn = ensure_accepts_kwargs(solver_fn, "dv")
@@ -73,7 +75,9 @@ def _compute_sr_update(
         updates = jnp.zeros((int(matrix_side / mpi.n_nodes),), dtype=jnp.float64)
         updates, token = mpi.mpi_scatter_jax(updates, root=0, token=token)
         info = None
-
+    if momentum is not None:
+        updates += momentum * old_updates
+        old_updates = updates
     if info is None:
         info = {}
 

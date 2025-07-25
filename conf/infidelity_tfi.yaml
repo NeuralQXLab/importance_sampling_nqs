@@ -40,3 +40,4 @@ final_state_path: "./data/infidelity_states/state_1.30000.nk"
 
 n_iter: 500
 sample_size : 14
+fullsum_eval : True

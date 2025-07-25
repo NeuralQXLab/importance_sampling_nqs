@@ -129,11 +129,11 @@ class VMC_GS(Base):
                                         momentum=self.momentum,
                                         collect_gradient_statistics=self.collect_gradient_statistics,
                                         on_the_fly=False)
-        
-        self.kwargs_hydra['fs_state'] = FullSumState(hilbert = self.gs.state.hilbert, 
-                                        model = self.gs.state.model, 
-                                        chunk_size=self.chunk_size_vstate, 
-                                        seed=0)
+        if self.fullsum_eval:
+            self.kwargs_hydra['fs_state'] = FullSumState(hilbert = self.gs.state.hilbert, 
+                                            model = self.gs.state.model, 
+                                            chunk_size=self.chunk_size_vstate, 
+                                            seed=0)
         self.kwargs_hydra['output_dir'] = self.output_dir
         # self.autodiagshift = advd.callbacks.PI_controller_diagshift(diag_shift_max=0.01, diag_shift_min=1e-6, safety_fac=1.0, clip_min=0.99, clip_max=1.01)
         
@@ -143,9 +143,11 @@ class VMC_GS(Base):
             self.out_log = (self.json_log, self.state_log)
         else :
             self.out_log = (self.json_log,)
-        
-        self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, self.kwargs_hydra, mode='call') for cb in cfg.callback_list)
-
+        if cfg.callback_list is not None:
+            self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, self.kwargs_hydra, mode='call') for cb in cfg.callback_list)
+        else:
+            self.callbacks = (InvalidLossStopping(),)
+            
     def __call__(self):
         print('calling run')
         self.gs.run(n_iter=self.n_iter, out=self.out_log, callback=self.callbacks)

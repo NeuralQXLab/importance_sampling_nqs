@@ -34,7 +34,7 @@ class overdispersed_distribution(AbstractDistribution):
         log_mod =  jnp.real(afun(variables, samples))
         return {'alpha': log_mod - jnp.mean(log_mod)}
     
-    def update_params(self, grad_snr, lr: float = 2e-1, clip: float =0.1):
+    def update_params(self, grad_snr, lr: float = 2e-1, clip: float = 0.1):
         update = jax.tree_util.tree_map(lambda x : jnp.clip(lr * x, -clip, clip), grad_snr)
         self.q_variables = jax.tree_util.tree_map(lambda x,y : x + y, self.q_variables, update)
     

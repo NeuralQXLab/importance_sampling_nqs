@@ -28,3 +28,4 @@ callback_list:
 
 chunk_size_jac: 512
 auto_is : true
+fullsum_eval : false

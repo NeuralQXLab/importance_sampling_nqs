@@ -123,3 +123,4 @@ class PCMolecule:
         else:
             cisolver = fci.FCI(mol, mf.mo_coeff)
             self.E_fci = cisolver.kernel()[0]
+        print('finished molecule init')

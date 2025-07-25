@@ -19,3 +19,4 @@ callback_list:
 n_iter: 2000
 sample_size : 11
 chunk_size_jac: 1024
+fullsum_eval: true
