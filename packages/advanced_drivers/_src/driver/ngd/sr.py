@@ -36,7 +36,7 @@ def _compute_sr_update(
     old_updates: Optional[Array] = None,
     params_structure,
     weights,
-    is_jac: Optional[PyTree] = None
+    is_jac: Optional[PyTree] = None,
 ):
     if momentum is not None:
         dv -= momentum * (O_L @ old_updates)
@@ -90,11 +90,9 @@ def _compute_sr_update(
         num_p = updates.shape[-1] // 2
         updates = updates[:num_p] + 1j * updates[num_p:]
 
-    if is_jac is not None or collect_gradient_statistics: 
+    if is_jac is not None or collect_gradient_statistics:
         info.update(
-            _compute_snr_derivative(
-            O_L, dv, grad, weights, is_jac, token=token
-        )
+            _compute_snr_derivative(O_L, dv, grad, weights, is_jac, token=token)
         )
     updates, token = distributed.allgather(updates, token=token)
     return updates, old_updates, info
@@ -116,7 +114,7 @@ def _compute_gradient_statistics_sr(
     N_mc = O_L.shape[0] * mpi.n_nodes
     num_p = grad.shape[-1] // 2
     grad_var = grad_var * N_mc - grad**2
-    jax.debug.print('{x}', x=grad_var[num_p:])
+    jax.debug.print("{x}", x=grad_var[num_p:])
     if mode == "complex" and nkjax.tree_leaf_iscomplex(params_structure):
         num_p = grad.shape[-1] // 2
         grad = grad[:num_p] + 1j * grad[num_p:]
@@ -125,20 +123,16 @@ def _compute_gradient_statistics_sr(
         grad, token = distributed.allgather(grad, token=token)
         grad_var, token = distributed.allgather(grad_var, token=token)
         # return {"gradient_mean": grad, "gradient_variance": grad_var}
-    return {'snr': jnp.mean(jnp.sqrt(jnp.abs(grad)**2/grad_var))}
+    return {"snr": jnp.mean(jnp.sqrt(jnp.abs(grad) ** 2 / grad_var))}
+
 
 @jax.jit
 def _compute_snr_derivative(
-    O_L: Array,
-    dv: Array,
-    grad: Array,
-    weights,
-    is_jac: PyTree = None,
-    token=None
+    O_L: Array, dv: Array, grad: Array, weights, is_jac: PyTree = None, token=None
 ):
     """
     Computes the gradient of the snr, and additional info if asked
-    
+
     """
     grad_var, token = mpi.mpi_allreduce_sum_jax(O_L.T**2 @ dv**2, token=token)
     N_mc = O_L.shape[0] * mpi.n_nodes
@@ -149,28 +143,41 @@ def _compute_snr_derivative(
     weights = jax.lax.collapse(weights2, 0, 2)
     dv_rw = weights * dv
     # grad_var = (O_L.T**2) @ (dv**2) * N_mc - (O_L.T@dv)**2
-    grad_var = (O_L.T**2) @ (dv**2) * N_mc - 2 * (O_L.T@dv_rw)*(O_L.T@dv) + (O_L.T@dv)**2
-    snr = jnp.abs(grad)/jnp.sqrt(grad_var)
-    snr, token = distributed.allgather(snr,token=token)
-    
+    grad_var = (
+        (O_L.T**2) @ (dv**2) * N_mc
+        - 2 * (O_L.T @ dv_rw) * (O_L.T @ dv)
+        + (O_L.T @ dv) ** 2
+    )
+    snr = jnp.abs(grad) / jnp.sqrt(grad_var)
+    snr, token = distributed.allgather(snr, token=token)
+
     if is_jac is not None:
         is_jac = jax.tree_util.tree_map(
-            lambda x: jax.lax.collapse(jnp.stack([jnp.real(x), jnp.imag(x)], axis=-1), 0, 2),
-            is_jac
+            lambda x: jax.lax.collapse(
+                jnp.stack([jnp.real(x), jnp.imag(x)], axis=-1), 0, 2
+            ),
+            is_jac,
         )
         grad_v = jax.tree_util.tree_map(
-            lambda x: mpi.mpi_allreduce_sum_jax((O_L.T**2) @ (x * dv**2) * N_mc - 2*grad*(O_L.T @ (x*dv)))[0],
-            is_jac)
-        
-    
-        snr_for_grad = 1/2 * jnp.abs(grad)/(grad_var)**(3/2)
-        grad_snr = jax.tree_util.tree_map(lambda g : jnp.mean(g * snr_for_grad, axis=-1), grad_v) #(N_Pis, 2N_p) then (N_Pis,) after mean 
-        
-        grad_snr = jax.tree_util.tree_map(lambda x : distributed.allgather(x,token=token)[0], grad_snr)
-        return {"grad_snr": grad_snr, 'snr': jnp.mean(snr)}
-    
+            lambda x: mpi.mpi_allreduce_sum_jax(
+                (O_L.T**2) @ (x * dv**2) * N_mc - 2 * grad * (O_L.T @ (x * dv))
+            )[0],
+            is_jac,
+        )
+
+        snr_for_grad = 1 / 2 * jnp.abs(grad) / (grad_var) ** (3 / 2)
+        grad_snr = jax.tree_util.tree_map(
+            lambda g: jnp.mean(g * snr_for_grad, axis=-1), grad_v
+        )  # (N_Pis, 2N_p) then (N_Pis,) after mean
+
+        grad_snr = jax.tree_util.tree_map(
+            lambda x: distributed.allgather(x, token=token)[0], grad_snr
+        )
+        return {"grad_snr": grad_snr, "snr": jnp.mean(snr)}
+
     else:
-        return {'snr': jnp.mean(snr)}
+        return {"snr": jnp.mean(snr)}
+
 
 @jax.jit
 def _compute_quadratic_model_sr(

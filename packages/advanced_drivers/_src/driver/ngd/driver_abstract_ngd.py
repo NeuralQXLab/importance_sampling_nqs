@@ -35,6 +35,7 @@ KernelFun = Callable[[PyTree, Array], DerivativesArgs]
 from netket.stats import statistics as nkstats
 from .is_stats import statistics
 
+
 @jax.jit
 def _flatten_samples(x):
     # return x.reshape(-1, x.shape[-1])
@@ -237,7 +238,9 @@ class AbstractNGDDriver(AbstractVariationalDriver):
                 `local_grad` should be such that the mean of its dot product with the jacobian equals the expectation value of the gradient of the loss.
                 `local_loss` should be such that its mean equals the expectation value of the loss.
         """
-        afun, variables, samples, weights, is_jac, extra_args = self._prepare_derivatives()
+        afun, variables, samples, weights, is_jac, extra_args = (
+            self._prepare_derivatives()
+        )
         local_grad, local_loss = self._kernel(
             afun,
             variables,
@@ -315,7 +318,9 @@ class AbstractNGDDriver(AbstractVariationalDriver):
     @timing.timed
     def compute_loss_and_update(self):
         # equivalent to using `local_estimator`
-        afun, variables, samples, weights, is_jac, extra_args = self._prepare_derivatives()
+        afun, variables, samples, weights, is_jac, extra_args = (
+            self._prepare_derivatives()
+        )
         local_grad, local_loss = self._kernel(
             afun,
             variables,
@@ -323,7 +328,7 @@ class AbstractNGDDriver(AbstractVariationalDriver):
             *extra_args,
         )
         self._loss_stats = statistics(local_loss, weights)
-        
+
         diag_shift = self.diag_shift
         proj_reg = self.proj_reg
         momentum = self.momentum
@@ -351,13 +356,15 @@ class AbstractNGDDriver(AbstractVariationalDriver):
             chunk_size=self.chunk_size_bwd,
             collect_quadratic_model=self.collect_quadratic_model,
             collect_gradient_statistics=self.collect_gradient_statistics,
-            is_jac=is_jac
+            is_jac=is_jac,
         )
-        
+
         # update is pars
-        if is_jac != None and self.sampling_distribution.name != 'default':
-            self.sampling_distribution.update_params(self.info['grad_snr'])
-            self.info['alpha'] = jnp.mean(self.sampling_distribution.q_variables['alpha'])
+        if is_jac != None and self.sampling_distribution.name != "default":
+            self.sampling_distribution.update_params(self.info["grad_snr"])
+            self.info["alpha"] = jnp.mean(
+                self.sampling_distribution.q_variables["alpha"]
+            )
         return self._loss_stats, self._dp
 
     @timing.timed

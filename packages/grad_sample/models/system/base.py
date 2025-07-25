@@ -2,6 +2,7 @@ import netket as nk
 from collections.abc import Sequence
 import json
 
+
 class Spin_Half:
     name = "None"
     graph_name = "None"

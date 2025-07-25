@@ -16,6 +16,7 @@ from netket.graph.space_group import SpaceGroupBuilder
 from netket.utils.types import Array
 from netket.nn.blocks import SymmExpSum
 
+
 class Square_Heisenberg(Spin_Half):
     rotation_group = nk.utils.group.planar.C(4)
 

@@ -50,4 +50,3 @@ class OutputHead(nn.Module):
 
         z = amp + 1j * sign
         return jnp.sum(log_cosh(z), axis=-1)
-

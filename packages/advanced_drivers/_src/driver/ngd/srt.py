@@ -10,7 +10,10 @@ from netket.utils import mpi
 from netket.utils.types import Union, Array, PyTree
 
 from netket_pro._src import distributed as distributed
-from advanced_drivers._src.driver.ngd.sr import _compute_gradient_statistics_sr, _compute_snr_derivative
+from advanced_drivers._src.driver.ngd.sr import (
+    _compute_gradient_statistics_sr,
+    _compute_snr_derivative,
+)
 
 
 @partial(
@@ -36,7 +39,7 @@ def _compute_srt_update(
     collect_gradient_statistics: bool = False,
     params_structure,
     weights,
-    is_jac: Optional[PyTree] = None
+    is_jac: Optional[PyTree] = None,
 ):
     if momentum is not None:
         dv -= momentum * (O_L @ old_updates)
@@ -100,12 +103,10 @@ def _compute_srt_update(
         num_p = updates.shape[-1] // 2
         updates = updates[:num_p] + 1j * updates[num_p:]
 
-    if is_jac is not None or collect_gradient_statistics: 
+    if is_jac is not None or collect_gradient_statistics:
         grad = grad, token = mpi.mpi_allreduce_sum_jax(O_L.T @ dv, token=token)
         info.update(
-            _compute_snr_derivative(
-            O_L, dv, grad, weights, is_jac, token=token
-        )
+            _compute_snr_derivative(O_L, dv, grad, weights, is_jac, token=token)
         )
 
     # if collect_gradient_statistics:

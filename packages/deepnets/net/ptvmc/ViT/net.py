@@ -3,6 +3,7 @@ from .heads import OutputHead
 from flax import linen as nn
 from typing import Callable
 
+
 def extract_patches2d(x, b):
     """
     Extract bxb patches from the (nbatches, nsites) input x.
@@ -17,19 +18,20 @@ def extract_patches2d(x, b):
     x = x.reshape(batch, L_eff * L_eff, -1)  # [L_eff*L_eff, b*b]
     return x
 
+
 class ViT(nn.Module):
     num_layers: int
     d_model: int
-    heads: int    
+    heads: int
     b: int
     L: int
     expansion_factor: int = 4
     transl_invariant: bool = True
 
     def setup(self):
-        
-        self.L_eff = self.L**2//self.b**2
-        
+
+        self.L_eff = self.L**2 // self.b**2
+
         self.patches_and_embed = Embed(
             self.d_model, self.b, extract_patches=extract_patches2d
         )

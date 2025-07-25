@@ -16,7 +16,7 @@ lr:
   init_value: 0.1
   transition_steps: 250
   end_value: 0.01
-                           
+
 diag_shift: 1e-4
 
 callback_list: 

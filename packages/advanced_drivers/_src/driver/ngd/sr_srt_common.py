@@ -107,7 +107,7 @@ def _sr_srt_common(
     collect_quadratic_model: bool = False,
     collect_gradient_statistics: bool = False,
     use_ntk: bool = False,
-    is_jac: Optional[PyTree] = None
+    is_jac: Optional[PyTree] = None,
 ):
     r"""
     Compute the Natural gradient update for the model specified by `log_psi({parameters, model_state}, samples)`
@@ -172,9 +172,9 @@ def _sr_srt_common(
         collect_gradient_statistics=collect_gradient_statistics,
         params_structure=_params_structure,
         weights=weights,
-        is_jac=is_jac
+        is_jac=is_jac,
     )
-    
+
     return unravel_params_fn(updates), old_updates, info
 
 
@@ -185,17 +185,13 @@ srt = partial(_sr_srt_common, use_ntk=True)
 
 @jax.jit
 def compute_snr_derivative(
-    is_jac: PyTree,
-    O_L: Array,
-    dv: Array,
-    grad: Array,
-    token=None
+    is_jac: PyTree, O_L: Array, dv: Array, grad: Array, token=None
 ):
     """
     Computes the gradient of the snr, and additional info if asked
-    
+
     """
-    raise ValueError('wrong function')
+    raise ValueError("wrong function")
     # force_unrolled = O_L.T * dv
     # num_p = force_unrolled.shape[0]//2
     # num_s = force_unrolled.shape[1]//2
@@ -203,7 +199,7 @@ def compute_snr_derivative(
     # force_unrolled =  num_s * (force_unrolled[:, ::2] + force_unrolled[:, 1::2]) # concat along sample dim (2N_p, N_s)
     # F = jnp.mean(force_unrolled, axis=1) # force in real parametrization, (2N_p, )
     # loc_var = jnp.abs(force_unrolled - F[:, None])**2 # (2N_p, N_s)
-    
+
     # loc_var_mean = jnp.mean(loc_var, axis=-1)
     # snr = jnp.abs(F)/jnp.sqrt(loc_var_mean)
     # grad_v = jax.tree_util.tree_map(
@@ -214,14 +210,19 @@ def compute_snr_derivative(
     N_mc = O_L.shape[0] * mpi.n_nodes
     num_p = grad.shape[-1] // 2
     grad_var = grad_var * N_mc - grad**2
-    grad_var = (O_L.T**2) @ (dv**2) * N_mc - (O_L.T@dv)**2
+    grad_var = (O_L.T**2) @ (dv**2) * N_mc - (O_L.T @ dv) ** 2
     grad_v = jax.tree_util.tree_map(
-        lambda x: mpi.mpi_allreduce_sum_jax((O_L.T**2) @ (x * dv**2) * N_mc - 2*grad*(O_L.T @ (x*dv)))[0],
-        is_jac)
-    
-    snr = jnp.abs(grad)/jnp.sqrt(grad_var)
-    snr_for_grad = 1/2 * jnp.abs(grad)/(grad_var)**(3/2)
-    grad_snr = jax.tree_util.tree_map(lambda g : jnp.mean(g * snr_for_grad, axis=-1), grad_v) #(N_Pis, 2N_p) then (N_Pis,) after mean 
+        lambda x: mpi.mpi_allreduce_sum_jax(
+            (O_L.T**2) @ (x * dv**2) * N_mc - 2 * grad * (O_L.T @ (x * dv))
+        )[0],
+        is_jac,
+    )
+
+    snr = jnp.abs(grad) / jnp.sqrt(grad_var)
+    snr_for_grad = 1 / 2 * jnp.abs(grad) / (grad_var) ** (3 / 2)
+    grad_snr = jax.tree_util.tree_map(
+        lambda g: jnp.mean(g * snr_for_grad, axis=-1), grad_v
+    )  # (N_Pis, 2N_p) then (N_Pis,) after mean
     # snr = distributed.allgather(grad,token=token)
     # grad_snr = distributed.allgather(grad,token=token)
-    return {"grad_snr": grad_snr, 'snr': jnp.mean(snr)}
+    return {"grad_snr": grad_snr, "snr": jnp.mean(snr)}

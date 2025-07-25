@@ -12,6 +12,8 @@ from netket.jax.sharding import (
 )
 
 from netket.sampler import MetropolisSamplerState
+
+
 # We must support serialization of the sampler state, which is a bit tricky
 # because we must support multi-GPU, sharding or MPI.
 def serialize_MetropolisSamplerState(sampler_state):

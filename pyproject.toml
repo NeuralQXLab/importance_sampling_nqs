@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "jax>=0.4.35",
+    "jax>=0.4.35,<0.6",
     "netket>=3.16.0",
     "einops>=0.6",
     "hydra-core>=1.3",
@@ -15,6 +15,7 @@ dependencies = [
     "pyscf==2.9.0",
     "sparse>=0.15, <0.16",
     "nqxpack>=0.1.1",
+    "ipython>=8.37.0",
 ]
 [build-system]
 requires = ["hatchling"]

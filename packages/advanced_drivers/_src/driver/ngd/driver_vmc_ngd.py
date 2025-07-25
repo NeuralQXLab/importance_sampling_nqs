@@ -28,7 +28,6 @@ from advanced_drivers._src.driver.ngd.driver_abstract_ngd import (
 )
 
 
-
 class VMC_NG(AbstractNGDDriver):
     r"""
     Energy minimization using Variational Monte Carlo (VMC) and Stochastic Reconfiguration (SR)
@@ -113,7 +112,7 @@ class VMC_NG(AbstractNGDDriver):
             chunk_size_bwd=chunk_size_bwd,
             collect_quadratic_model=collect_quadratic_model,
             collect_gradient_statistics=collect_gradient_statistics,
-            auto_is = auto_is,
+            auto_is=auto_is,
             mode=mode,
             use_ntk=use_ntk,
             on_the_fly=on_the_fly,
@@ -144,13 +143,13 @@ class VMC_NG(AbstractNGDDriver):
         )
         # estimate log derivative of is params if auto IS is used
         # if self.auto_is and self.sampling_distribution.name != 'default' and self.step_count > 200:
-        if self.auto_is and self.sampling_distribution.name != 'default':
+        if self.auto_is and self.sampling_distribution.name != "default":
             is_jac = self.sampling_distribution.compute_log_grad_c(
                 afun_p,
                 variables_q,
                 samples,
             )
-        else :
+        else:
             is_jac = None
 
         # TODO: `_compute_weights` does a few forward passes that need to be done the first time we call _prepare_derivatives but
