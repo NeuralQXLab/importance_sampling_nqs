@@ -160,9 +160,11 @@ class VMC_GS(Base):
             self.out_log = (self.json_log, self.state_log)
         else:
             self.out_log = (self.json_log,)
-        
-        self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, self.kwargs_hydra, mode='call') for cb in cfg.callback_list)
-
+            
+        if self.cfg.callback_list is not None:
+            self.callbacks = (InvalidLossStopping(),) +  tuple(smart_instantiate(cb, self.kwargs_hydra, mode='call') for cb in cfg.callback_list)
+        else:
+            self.callbacks = (InvalidLossStopping(),)
     def __call__(self):
         print("calling run")
         self.gs.run(n_iter=self.n_iter, out=self.out_log, callback=self.callbacks)

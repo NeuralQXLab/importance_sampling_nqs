@@ -11,7 +11,6 @@ from netket.utils.types import Union, Array, PyTree
 
 from netket_pro._src import distributed as distributed
 from advanced_drivers._src.driver.ngd.sr import (
-    _compute_gradient_statistics_sr,
     _compute_snr_derivative,
 )
 
@@ -109,13 +108,6 @@ def _compute_srt_update(
             _compute_snr_derivative(O_L, dv, grad, weights, is_jac, token=token)
         )
 
-    # if collect_gradient_statistics:
-    #     grad = grad, token = mpi.mpi_allreduce_sum_jax(O_L.T @ dv, token=token)
-    #     info.update(
-    #         _compute_gradient_statistics_sr(
-    #             O_L, dv, grad, mode, params_structure, token=token
-    #         )
-    #     )
 
     if distributed.mode() == "sharding":
         out_shardings = (

@@ -98,73 +98,52 @@ def _compute_sr_update(
     return updates, old_updates, info
 
 
-@partial(
-    jax.jit,
-    static_argnames=("mode",),
-)
-def _compute_gradient_statistics_sr(
-    O_L: Array,
-    dv: Array,
-    grad: Array,
-    mode: str,
-    params_structure,
-    token=None,
-):
-    grad_var, token = mpi.mpi_allreduce_sum_jax(O_L.T**2 @ dv**2, token=token)
-    N_mc = O_L.shape[0] * mpi.n_nodes
-    num_p = grad.shape[-1] // 2
-    grad_var = grad_var * N_mc - grad**2
-    jax.debug.print("{x}", x=grad_var[num_p:])
-    if mode == "complex" and nkjax.tree_leaf_iscomplex(params_structure):
-        num_p = grad.shape[-1] // 2
-        grad = grad[:num_p] + 1j * grad[num_p:]
-        grad_var = grad_var[:num_p] + 1j * grad_var[num_p:]
-
-        grad, token = distributed.allgather(grad, token=token)
-        grad_var, token = distributed.allgather(grad_var, token=token)
-        # return {"gradient_mean": grad, "gradient_variance": grad_var}
-    return {"snr": jnp.mean(jnp.sqrt(jnp.abs(grad) ** 2 / grad_var))}
-
-
 @jax.jit
 def _compute_snr_derivative(
-    O_L: Array, dv: Array, grad: Array, weights, is_jac: PyTree = None, token=None
+    O_L: Array, dv: Array, grad: Array, weights, is_jac: PyTree = None, token=None, mode='complex'
 ):
     """
     Computes the gradient of the snr, and additional info if asked
-
     """
     grad_var, token = mpi.mpi_allreduce_sum_jax(O_L.T**2 @ dv**2, token=token)
-    N_mc = O_L.shape[0] * mpi.n_nodes
-    num_p = grad.shape[-1] // 2
-    grad_var = grad_var * N_mc - grad**2
+    N_mc = O_L.shape[0] * mpi.n_nodes // 2
+    if mode!='complex':
+        raise ValueError('Automatic IS is only implemented with mode = complex')
 
-    weights2 = jnp.stack([jnp.real(weights), jnp.imag(weights)], axis=-1)
+    num_p = grad.shape[-1] // 2
+    weights2 = jnp.stack([weights, weights], axis=-1)
     weights = jax.lax.collapse(weights2, 0, 2)
     dv_rw = weights * dv
-    # grad_var = (O_L.T**2) @ (dv**2) * N_mc - (O_L.T@dv)**2
+    O_R, O_I = O_L.T[:, ::2], O_L.T[:, 1::2]
+    dv_R, dv_I = dv[::2], dv[1::2]
+    # to compute the square of the local gradient (2\Re(O_xi\Delta H_{loc}(x)^*})^2 
+    # we need to compute (Re(O_xi)Re(\Delta H_{loc}(x)^*) + Im(O_xi)Im(\Delta H_{loc}(x)^*))^2, which is done below
+    # We multiply by N_mc as the arrays were previously scaled in prepare_inputs by w(x)/\sqrt{N_mc}, which introduces now a factor of 1/N_mc^2
+    g_loc_sq  = (O_R**2 @ dv_R**2 + O_I**2 @ dv_I**2 + 2 * (O_R*O_I) @ (dv_R*dv_I)) * N_mc
+
+    # Then  we develop w^2(x)(f_loc^i(x) - F_i)^2 
     grad_var = (
-        (O_L.T**2) @ (dv**2) * N_mc
-        - 2 * (O_L.T @ dv_rw) * (O_L.T @ dv)
-        + (O_L.T @ dv) ** 2
+        g_loc_sq
+        - 2 * (O_L.T @ dv_rw) * grad
+        + jnp.mean(weights**2) * grad ** 2
     )
     snr = jnp.abs(grad) / jnp.sqrt(grad_var)
     snr, token = distributed.allgather(snr, token=token)
 
     if is_jac is not None:
-        is_jac = jax.tree_util.tree_map(
+        is_jac2 = jax.tree_util.tree_map(
             lambda x: jax.lax.collapse(
-                jnp.stack([jnp.real(x), jnp.imag(x)], axis=-1), 0, 2
+                jnp.stack([x, x], axis=-1), 0, 2
             ),
             is_jac,
         )
+        # To compute the gradient of the variance, we repeat the expression above, inserting the jacobian of the probability distribution
         grad_v = jax.tree_util.tree_map(
-            lambda x: mpi.mpi_allreduce_sum_jax(
-                (O_L.T**2) @ (x * dv**2) * N_mc - 2 * grad * (O_L.T @ (x * dv))
-            )[0],
-            is_jac,
+            lambda x,y: mpi.mpi_allreduce_sum_jax(
+                (O_R**2 @ (x * dv_R**2) + O_I**2 @ (x * dv_I**2) + 2 * (O_R*O_I) @ (x*dv_R*dv_I)) * N_mc - 2 * grad * (O_L.T @ (y*dv_rw)) + (weights**2 @ y / (N_mc * 4)) * grad ** 2
+            )[0], is_jac, is_jac2
         )
-
+        
         snr_for_grad = 1 / 2 * jnp.abs(grad) / (grad_var) ** (3 / 2)
         grad_snr = jax.tree_util.tree_map(
             lambda g: jnp.mean(g * snr_for_grad, axis=-1), grad_v
